@@ -114,8 +114,23 @@ Password reset works offline and the generated token is printed to the browser c
 |---|---|
 | **Always `role: "USER"`** | `src/mocks/handlers/auth.ts` returns `role: "USER"` for every login. Role-gated screens (admin approvals, admin disputes, shelter queue) cannot be exercised offline unless you temporarily patch the handler. |
 | **In-memory, resets on reload** | Good for isolation, bad for reproducing multi-step flows across a refresh. |
-| **Mock WebSocket only** | The notification socket URL is built from `window.location.host` (`src/context/NotificationSocketContext.tsx`), so in MSW mode it points at the Vite dev server. No handler upgrades it; expect the bell to stay disconnected. |
+| **Mock WebSocket only** | The notification socket is served by the MSW `ws` handler in `src/mocks/handlers/notify.ts`. It emits sample events and does not model real server-side triggers (see *Live notifications in MSW mode* below). |
 | **`onUnhandledRequest: 'warn'`** | Anything MSW does not mock shows up as a console warning and a hanging/404 request. That warning *is* your signal that a handler is missing. |
+
+### Live notifications in MSW mode
+
+With `VITE_MSW=true`, the notifications WebSocket (`/api/ws/notifications`) is mocked and pushes a
+sample notification every **15 seconds**. You see the toast and the navbar badge update without
+triggering anything yourself. Every pushed event is also added to `GET /api/notifications`, so events
+emitted while the socket is down are picked up after it reconnects.
+
+| Setting | How |
+|---|---|
+| Interval | `VITE_MSW_NOTIFY_INTERVAL_MS=5000` in `.env.local`, or `localStorage["petad:msw:notify-interval-ms"]` (wins) |
+| Start paused | `localStorage["petad:msw:notify-paused"] = "true"` |
+| At runtime (devtools console) | `__petadMockNotifications.pause()` / `.resume()` / `.emit()` / `.setIntervalMs(ms)` / `.dropConnections()` |
+
+`dropConnections()` abnormally closes the socket so you can watch the reconnect and backfill path.
 
 ---
 
