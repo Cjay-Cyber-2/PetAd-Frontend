@@ -129,3 +129,13 @@ export const custodyRequestSchema = z
   });
 
 export type CustodyRequest = z.infer<typeof custodyRequestSchema>;
+
+/** Paginated envelope returned by `GET /custody`. */
+export const custodyListResponseSchema = z.object({
+  data: z.array(custodyArrangementSchema),
+  total: z.number().int().nonnegative(),
+  page: z.number().int().positive(),
+  limit: z.number().int().positive(),
+});
+
+export type CustodyListResponse = z.infer<typeof custodyListResponseSchema>;
