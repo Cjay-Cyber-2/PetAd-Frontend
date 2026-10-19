@@ -30,8 +30,10 @@ import type {
 } from "../types/dispute";
 import type {
   EscrowLifecycleStatus,
+  EscrowRecordStatus,
   EscrowStatus,
 } from "../types/escrow";
+import type { CustodyStatus as CustodyRequestStatus } from "../features/custody/types/custody";
 
 /**
  * Status colour tokens.
@@ -76,11 +78,15 @@ export interface StatusDomainMap {
   /** Adoption (escrow) lifecycle. */
   adoption: AdoptionStatus;
   /** Temporary custody lifecycle. */
-  custody: CustodyStatus;
+  custody: CustodyStatus | CustodyRequestStatus;
   /** Disputes raised against an adoption or custody. */
   dispute: DisputeStatusCode;
   /** Escrow records, escrow lifecycle and escrow state within a dispute. */
-  escrow: EscrowStatus | EscrowLifecycleStatus | DisputeEscrowStatus;
+  escrow:
+    | EscrowStatus
+    | EscrowLifecycleStatus
+    | EscrowRecordStatus
+    | DisputeEscrowStatus;
   /** SLA health of a dispute. */
   sla: DisputeSlaStatus;
 }
@@ -255,6 +261,47 @@ export const STATUS_CONFIG = {
     description: "Custody was cancelled before completion.",
     color: "gray",
     icon: Ban,
+  },
+
+  // ─── Custody (request lifecycle vocabulary) ───────────────────────────────
+  // The custody feature models a request in lowercase (`requested`, `approved`,
+  // …) while the custody views use the uppercase lifecycle codes above. Both
+  // are rendered from this map so a custody record looks the same either way.
+  "custody:requested": {
+    label: "Requested",
+    description: "The custody request has been sent and is awaiting review.",
+    color: "amber",
+    icon: Hourglass,
+  },
+  "custody:approved": {
+    label: "Approved",
+    description: "The custody request was approved.",
+    color: "green",
+    icon: BadgeCheck,
+  },
+  "custody:active": {
+    label: "Active",
+    description: "Custody is currently active.",
+    color: "green",
+    icon: ShieldCheck,
+  },
+  "custody:completed": {
+    label: "Completed",
+    description: "Custody has been completed successfully.",
+    color: "green",
+    icon: CheckCircle2,
+  },
+  "custody:cancelled": {
+    label: "Cancelled",
+    description: "Custody was cancelled before completion.",
+    color: "gray",
+    icon: Ban,
+  },
+  "custody:disputed": {
+    label: "Disputed",
+    description: "A dispute has been raised for this custody.",
+    color: "red",
+    icon: Scale,
   },
 
   // ─── Dispute ──────────────────────────────────────────────────────────────

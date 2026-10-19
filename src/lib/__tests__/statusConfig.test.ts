@@ -21,8 +21,10 @@ import {
 } from "../../types/dispute";
 import {
   ESCROW_LIFECYCLE_STATUSES,
+  ESCROW_RECORD_STATUSES,
   ESCROW_STATUSES,
 } from "../../types/escrow";
+import { CUSTODY_STATUSES as CUSTODY_REQUEST_STATUSES } from "../../features/custody/types/custody";
 
 /**
  * Every status of every domain, listed at runtime so the map can be verified
@@ -32,11 +34,12 @@ import {
 const DOMAIN_STATUSES: Record<StatusDomain, readonly string[]> = {
   approval: APPROVAL_STATUS_CODES,
   adoption: ADOPTION_STATUSES,
-  custody: CUSTODY_STATUSES,
+  custody: [...CUSTODY_STATUSES, ...CUSTODY_REQUEST_STATUSES],
   dispute: DISPUTE_STATUS_CODES,
   escrow: [
     ...ESCROW_STATUSES,
     ...ESCROW_LIFECYCLE_STATUSES,
+    ...ESCROW_RECORD_STATUSES,
     ...DISPUTE_ESCROW_STATUSES,
   ],
   sla: DISPUTE_SLA_STATUSES,
