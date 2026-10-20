@@ -35,6 +35,7 @@ const SettlementSummaryPage = lazy(() =>
   })),
 );
 const AdoptionTimelinePage = lazy(() => import("./pages/AdoptionTimelinePage"));
+const AdoptionStatusPage = lazy(() => import("./pages/AdoptionStatusPage"));
 const ModalPreview = lazy(() => import("./pages/ModalPreview"));
 const StatusPollingDemo = lazy(() => import("./pages/StatusPollingDemo"));
 const CustodyTimelinePage = lazy(() => import("./pages/CustodyTimelinePage"));
@@ -112,6 +113,10 @@ function App() {
             <Route
               path="/adoption/:adoptionId/timeline"
               element={<AdoptionTimelinePage />}
+            />
+            <Route
+              path="/adoption/:adoptionId/status"
+              element={<AdoptionStatusPage />}
             />
             <Route path="/admin/approvals" element={<AdminApprovalQueuePage />} />
             <Route path="/admin/disputes" element={<AdminDisputeListPage />} />
