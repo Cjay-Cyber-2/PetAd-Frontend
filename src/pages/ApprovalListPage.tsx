@@ -97,9 +97,14 @@ function parseSortOrder(raw: string | null): SortOrder {
 
 /** Reads the `page` query param, falling back to page 1 for invalid values. */
 function parsePage(raw: string | null): number {
-  const value = Number.parseInt((raw ?? "").trim(), 10);
+  const value = (raw ?? "").trim();
 
-  return Number.isFinite(value) && value > 0 ? value : 1;
+  // Only accept a plain positive integer — "2abc" or "-1" are not valid pages.
+  if (!/^\d+$/.test(value)) return 1;
+
+  const page = Number.parseInt(value, 10);
+
+  return Number.isFinite(page) && page > 0 ? page : 1;
 }
 
 /** Builds the window of page numbers shown in the pagination control. */
@@ -303,14 +308,25 @@ export default function ApprovalListPage() {
 
   // ── URL state (write) ──────────────────────────────────────────────────────
   const writeUrlState = useCallback(
-    (next: { status: StatusFilter; sort: SortOrder; page: number }) => {
-      setSearchParams((prev) => {
-        const params = new URLSearchParams(prev);
-        params.set(STATUS_PARAM, next.status);
-        params.set(SORT_PARAM, next.sort);
-        params.set(PAGE_PARAM, String(next.page));
-        return params;
-      });
+    (
+      next: { status: StatusFilter; sort: SortOrder; page: number },
+      options?: { replace?: boolean },
+    ) => {
+      setSearchParams(
+        (prev) => {
+          const params = new URLSearchParams(prev);
+          // Delete first so the three params always end up in a stable order
+          // (status → sort → page), no matter how the URL was built.
+          params.delete(STATUS_PARAM);
+          params.delete(SORT_PARAM);
+          params.delete(PAGE_PARAM);
+          params.set(STATUS_PARAM, next.status);
+          params.set(SORT_PARAM, next.sort);
+          params.set(PAGE_PARAM, String(next.page));
+          return params;
+        },
+        options,
+      );
     },
     [setSearchParams],
   );
@@ -372,12 +388,16 @@ export default function ApprovalListPage() {
     (items.length >= PAGE_SIZE ? currentPage + 1 : currentPage);
 
   // A stale page number (?page=99) would render an empty list — fall back to
-  // the last valid page instead.
+  // the last valid page instead. The correction replaces the current history
+  // entry so the Back button does not walk into the invalid URL again.
   useEffect(() => {
     if (isLoading || isError || knownTotalPages === undefined) return;
     if (currentPage <= knownTotalPages) return;
 
-    writeUrlState({ status: activeStatus, sort: activeSort, page: knownTotalPages });
+    writeUrlState(
+      { status: activeStatus, sort: activeSort, page: knownTotalPages },
+      { replace: true },
+    );
   }, [
     activeSort,
     activeStatus,

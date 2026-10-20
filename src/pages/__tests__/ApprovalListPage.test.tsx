@@ -440,6 +440,23 @@ describe("ApprovalListPage", () => {
     expect(params.get("page")).toBe("1");
   });
 
+  it("only accepts a plain positive integer for the page param", async () => {
+    const requestUrls: string[] = [];
+
+    server.use(
+      http.get("http://localhost:3000/api/approvals", ({ request }) => {
+        requestUrls.push(request.url);
+        return HttpResponse.json({ items: [], total: 0 });
+      }),
+    );
+
+    renderPage(["/?page=2abc"]);
+
+    await waitFor(() => expect(screen.getByText("No approval history yet")).toBeInTheDocument());
+
+    expect(new URL(requestUrls[0]).searchParams.get("page")).toBe("1");
+  });
+
   // ── Sorting ──────────────────────────────────────────────────────────────
 
   it("sorts the rendered items by the selected order", async () => {
