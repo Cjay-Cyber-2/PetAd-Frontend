@@ -86,7 +86,7 @@ export default function AdminApprovalQueuePage() {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-extrabold text-[#0D162B] tracking-tight">
-            Application Review Queue
+            Approval Queue
           </h1>
           <p className="mt-2 text-gray-500 font-medium">
             Review adoption and custody applications and their risk flags
