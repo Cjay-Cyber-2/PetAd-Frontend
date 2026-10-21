@@ -5,13 +5,19 @@ import type { ApprovalListParams, ApprovalListResponse } from "../types/approval
 // ─── Query Key Factory ───────────────────────────────────────────────────────
 
 /**
- * Stable query-key factory for the approvals list.
- * Use `approvalKeys.list(params)` in mutations or manual invalidation to
- * keep cache keys consistent across the app.
+ * Stable query-key factory for the approvals domain.
+ *
+ * - `approvalKeys.all` — the `["approvals"]` root; matches lists *and* details.
+ * - `approvalKeys.list(params)` — one cached page per filter/pagination set.
+ * - `approvalKeys.detail(id)` — one cached record per approval id.
+ *
+ * Use these in mutations or manual invalidation so cache keys stay consistent
+ * across the app.
  */
 export const approvalKeys = {
   all: ["approvals"] as const,
   list: (params: ApprovalListParams) => ["approvals", params] as const,
+  detail: (id: string | undefined) => ["approvals", id] as const,
 };
 
 // ─── Hook ────────────────────────────────────────────────────────────────────
@@ -35,6 +41,7 @@ export function useApprovalList(params: ApprovalListParams = {}) {
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: approvalKeys.list(params),
     queryFn: () => approvalService.getApprovals(params),
+    // Lists are stable between operator actions, so avoid refetching on every render.
     staleTime: 60_000,
     refetchOnWindowFocus: false,
   });

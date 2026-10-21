@@ -1,4 +1,7 @@
 import { createContext, useContext, useState, useCallback, useEffect, useRef, type ReactNode } from "react";
+import { QueryClientContext } from "@tanstack/react-query";
+import { ToastContext } from "../components/toast/ToastProvider";
+import { UNREAD_NOTIFICATION_COUNT_QUERY_KEY } from "../features/notifications/hooks/useUnreadNotificationCount";
 
 /**
  * Connection states for the notification WebSocket:
@@ -23,6 +26,33 @@ const NotificationSocketContext = createContext<NotificationSocketContextValue |
 
 const RECONNECT_BASE_DELAY = 1000;
 const RECONNECT_MAX_DELAY = 30000;
+
+/** Query prefixes refreshed when a notification arrives or after a reconnect. */
+const NOTIFICATION_QUERY_KEYS = [["notifications"], UNREAD_NOTIFICATION_COUNT_QUERY_KEY] as const;
+
+interface NotificationMessage {
+  type: string;
+  payload: { title?: unknown; message?: unknown };
+}
+
+function parseNotificationMessage(data: unknown): NotificationMessage | null {
+  if (typeof data !== "string") return null;
+  try {
+    const parsed: unknown = JSON.parse(data);
+    if (
+      parsed !== null &&
+      typeof parsed === "object" &&
+      typeof (parsed as { type?: unknown }).type === "string" &&
+      typeof (parsed as { payload?: unknown }).payload === "object" &&
+      (parsed as { payload?: unknown }).payload !== null
+    ) {
+      return parsed as NotificationMessage;
+    }
+  } catch {
+    // Non-JSON frames (e.g. heartbeats) are ignored.
+  }
+  return null;
+}
 
 function getReconnectDelay(attempt: number): number {
   const delay = Math.min(RECONNECT_BASE_DELAY * Math.pow(2, attempt), RECONNECT_MAX_DELAY);
@@ -49,6 +79,25 @@ export function NotificationSocketProvider({
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mountedRef = useRef(true);
+  const hasConnectedRef = useRef(false);
+
+  // Both are optional so the provider still works in isolated tests.
+  const queryClient = useContext(QueryClientContext);
+  const toast = useContext(ToastContext);
+  const queryClientRef = useRef(queryClient);
+  const toastRef = useRef(toast);
+  useEffect(() => {
+    queryClientRef.current = queryClient;
+    toastRef.current = toast;
+  });
+
+  const refreshNotificationQueries = useCallback(() => {
+    const client = queryClientRef.current;
+    if (!client) return;
+    for (const queryKey of NOTIFICATION_QUERY_KEYS) {
+      client.invalidateQueries({ queryKey: [...queryKey] });
+    }
+  }, []);
 
   const cleanup = useCallback(() => {
     if (reconnectTimerRef.current !== null) {
@@ -89,6 +138,28 @@ export function NotificationSocketProvider({
         setConnectionState("connected");
         setReconnectAttempts(0);
         setLastConnectedAt(Date.now());
+
+        // Backfill: anything emitted while we were offline is only reachable
+        // through the REST endpoints, so refetch them after a reconnect.
+        if (hasConnectedRef.current) {
+          refreshNotificationQueries();
+        }
+        hasConnectedRef.current = true;
+      };
+
+      ws.onmessage = (event) => {
+        if (!mountedRef.current) return;
+        const message = parseNotificationMessage(event.data);
+        if (!message) return;
+
+        refreshNotificationQueries();
+
+        const { title, message: body } = message.payload;
+        toastRef.current?.showToast({
+          type: "info",
+          title: typeof title === "string" ? title : "New notification",
+          message: typeof body === "string" ? body : "",
+        });
       };
 
       ws.onclose = (event) => {
@@ -133,7 +204,7 @@ export function NotificationSocketProvider({
         return next;
       });
     }
-  }, [enabled]);
+  }, [enabled, refreshNotificationQueries]);
 
   const reconnect = useCallback(() => {
     cleanup();
