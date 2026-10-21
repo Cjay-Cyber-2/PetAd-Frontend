@@ -1,9 +1,12 @@
 import type { ApiClientConfig } from "../types/auth";
-import { ApiError, ValidationApiError } from "./api-errors";
+import { ApiError, NetworkError, ValidationApiError } from "./api-errors";
+import { queryClient } from "./query-client";
+import { markSessionUnauthenticated, redirectToLogin } from "./session";
 class ApiClient {
 	private baseURL: string;
 	private defaultHeaders: Record<string, string>;
 	private onUnauthorized?: () => void;
+	private unauthorizedHandled = false;
 
 	constructor(config: ApiClientConfig) {
 		this.baseURL = config.baseURL;
@@ -38,17 +41,29 @@ class ApiClient {
 		return headers;
 	}
 
+	private expireSession(): void {
+		if (typeof window !== "undefined") {
+			localStorage.removeItem("auth_token");
+			sessionStorage.removeItem("auth_token");
+		}
+
+		if (this.unauthorizedHandled) return;
+		this.unauthorizedHandled = true;
+		queryClient.clear();
+		markSessionUnauthenticated();
+
+		if (this.onUnauthorized) {
+			this.onUnauthorized();
+			return;
+		}
+
+		redirectToLogin();
+	}
+
 	private async handleResponse<T>(response: Response): Promise<T> {
 		if (!response.ok) {
-			// Handle 401 Unauthorized
-
 			if (response.status === 401) {
-				if (typeof window !== "undefined") {
-					localStorage.removeItem("auth_token");
-					sessionStorage.removeItem("auth_token");
-				}
-
-				this.onUnauthorized?.();
+				this.expireSession();
 
 				throw new ApiError("Unauthorized access", {
 					status: 401,
@@ -116,6 +131,7 @@ if (response.status === 422) {
 		try {
 			const response = await fetch(url, {
 				...options,
+				signal: options.signal,
 				headers: {
 					...headers,
 					...options.headers,
@@ -124,16 +140,23 @@ if (response.status === 422) {
 
 			return this.handleResponse<T>(response);
 		} catch (error) {
-			// Check if it's a network error
-			if (error instanceof TypeError && error.message === "Failed to fetch") {
-				throw new ApiError("Network error - please check your connection", {
-					code: "NETWORK_ERROR",
-					isNetworkError: true,
-				});
+			if (error instanceof Error && error.name === "AbortError") {
+				throw error;
 			}
 
-			// Re-throw if it's already an ApiError
-			if (error instanceof ApiError || (error as Error).name === "ApiError") {
+			const offline =
+				(typeof navigator !== "undefined" && navigator.onLine === false) ||
+				(error instanceof TypeError && error.message === "Failed to fetch");
+
+			if (offline) {
+				throw new NetworkError();
+			}
+
+			if (
+				error instanceof ApiError ||
+				error instanceof NetworkError ||
+				(error as Error).name === "ApiError"
+			) {
 				throw error;
 			}
 
@@ -216,6 +239,6 @@ const API_URL = import.meta.env.VITE_API_URL ?? defaultApiUrl;
 export const apiClient = createApiClient({
 	baseURL: API_URL,
 	onUnauthorized: () => {
-		window.location.href = "/login";
+		redirectToLogin();
 	},
 });

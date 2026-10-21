@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useResolveDispute } from "../../hooks/useResolveDispute";
 import { toast } from "react-hot-toast";
+import { queryKeys } from "../../lib/queryKeys";
 
 type Props = {
   disputeId: string;
@@ -49,8 +50,8 @@ export default function AdminDisputeResolutionForm({
       });
 
       // Invalidate queries
-      queryClient.invalidateQueries({ queryKey: ["disputes"] });
-      queryClient.invalidateQueries({ queryKey: ["adoptions"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.disputes.list() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.adoptions.list() });
 
       // Success feedback
       toast.success("Dispute resolved");

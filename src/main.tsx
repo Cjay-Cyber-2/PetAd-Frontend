@@ -7,6 +7,9 @@ import { ToastProvider } from './components/toast/ToastProvider'
 import { ThemeProvider } from './components/theme-provider'
 import './index.css'
 import App from './App.tsx'
+import { loadEnv } from './lib/env'
+
+loadEnv()
 
 const STALE_SW_RELOAD_KEY = 'petad:stale-sw-reload'
 
@@ -53,7 +56,7 @@ async function bootstrap() {
     return
   }
 
-  if (import.meta.env.DEV && import.meta.env.VITE_MSW === 'true') {
+  if (import.meta.env.VITE_MSW === 'true') {
     const { worker } = await import('./mocks/browser')
     await worker.start({
       onUnhandledRequest: 'warn',

@@ -1,6 +1,7 @@
 import { useApiMutation } from "./useApiMutation";
 import { useQueryClient } from "@tanstack/react-query";
 import type { NotificationsPage } from "../types/notifications";
+import { queryKeys } from "../lib/queryKeys";
 
 type NotificationCache = {
   pages: NotificationsPage[];
@@ -20,10 +21,10 @@ export function useMutateMarkAllRead() {
   const { mutate, isPending, isError } = useApiMutation<void, void>(
     () => markAllNotificationsRead(),
     {
-      invalidates: [["notifications"]],
+      invalidates: [queryKeys.notifications.list()],
       onOptimisticUpdate: () => {
         queryClient.setQueriesData<NotificationCache>(
-          { queryKey: ["notifications"] },
+          { queryKey: queryKeys.notifications.list() },
           (old) => {
             if (!old) return old;
             return {
@@ -37,7 +38,7 @@ export function useMutateMarkAllRead() {
         );
 
         queryClient.setQueryData<NotificationsPage>(
-          ["notifications", "dropdown"],
+          queryKeys.notifications.dropdown(),
           (old) => {
             if (!old) return old;
             return {

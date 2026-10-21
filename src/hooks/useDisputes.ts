@@ -1,6 +1,7 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { apiClient } from "../lib/api-client";
 import type { DisputeListResponse } from "../types/dispute";
+import { queryKeys } from "../lib/queryKeys";
 
 
 interface UseDisputesParams {
@@ -12,7 +13,7 @@ export function useDisputes({ status, overdue }: UseDisputesParams = {}) {
   const queryParams = { status, overdue };
 
   const query = useInfiniteQuery({
-    queryKey: ["disputes", queryParams],
+    queryKey: queryKeys.disputes.list(queryParams),
     queryFn: ({ pageParam }) => {
       const params = new URLSearchParams();
       

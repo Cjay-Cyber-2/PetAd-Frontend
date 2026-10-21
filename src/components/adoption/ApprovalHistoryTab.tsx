@@ -5,6 +5,7 @@ import { StellarTxLink } from "../ui/StellarTxLink";
 import { Skeleton } from "../ui/Skeleton";
 import { EmptyState } from "../ui/emptyState";
 import type { ApprovalDecision } from "../../types/adoption";
+import { queryKeys } from "../../lib/queryKeys";
 
 interface ApprovalHistoryTabProps {
   adoptionId: string;
@@ -12,7 +13,7 @@ interface ApprovalHistoryTabProps {
 
 export default function ApprovalHistoryTab({ adoptionId }: ApprovalHistoryTabProps) {
   const { data: approvals, isLoading, isError } = useApiQuery<ApprovalDecision[]>(
-    ["approvals", adoptionId],
+    queryKeys.approvals.detail(adoptionId),
     () => adoptionService.getApprovals(adoptionId)
   );
 

@@ -11,6 +11,7 @@ import {
   MoreHorizontal
 } from "lucide-react";
 import { adoptionService } from "../api/adoptionService";
+import { queryKeys } from "../lib/queryKeys";
 import { StatusFilterChips } from "../components/ui/StatusFilterChips";
 import { Skeleton } from "../components/ui/Skeleton";
 import { EmptyState } from "../components/ui/emptyState";
@@ -37,7 +38,11 @@ export default function AdminApprovalQueuePage() {
     isError,
     refetch
   } = useInfiniteQuery({
-    queryKey: ["adminApprovals", shelterFilter, statusFilters, showOverdueOnly],
+    queryKey: queryKeys.approvals.admin({
+      shelterFilter,
+      statusFilters,
+      showOverdueOnly,
+    }),
     queryFn: ({ pageParam }) => 
       adoptionService.getAdminApprovalQueue({
         shelter: shelterFilter || undefined,

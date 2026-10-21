@@ -1,6 +1,8 @@
 import { useApiMutation } from "./useApiMutation";
 import { useQueryClient } from "@tanstack/react-query";
 import { documentService } from "../api/documentService";
+import { queryKeys } from "../lib/queryKeys";
+import { queryKeys } from "../lib/queryKeys";
 
 export interface DocumentReviewData {
     status: 'APPROVED' | 'REJECTED';
@@ -30,9 +32,9 @@ export function useMutateReviewDocument(adoptionId: string) {
     const { mutate, mutateAsync, isPending, isError, error } = useApiMutation(
         reviewDocument,
         {
-            invalidates: [['documents', adoptionId]],
+            invalidates: [queryKeys.documents.list(adoptionId)],
             onSuccess: () => {
-                queryClient.invalidateQueries({ queryKey: ['documents', adoptionId] });
+                queryClient.invalidateQueries({ queryKey: queryKeys.documents.list(adoptionId) });
             },
         },
     );

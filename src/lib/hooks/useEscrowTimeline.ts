@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "../api-client";
+import { queryKeys } from "../queryKeys";
 
 export type EscrowTimelineEventType =
 	| "CREATED"
@@ -28,7 +29,7 @@ export function useEscrowTimeline(
 	const enabled = Boolean(adoptionId) && (options?.enabled ?? true);
 
 	const query = useQuery({
-		queryKey: ["escrow-timeline", adoptionId],
+		queryKey: queryKeys.escrow.timeline(adoptionId ?? ""),
 		queryFn: () =>
 			apiClient.get<EscrowTimelineEvent[]>(
 				`/adoption/${adoptionId}/escrow/timeline`,

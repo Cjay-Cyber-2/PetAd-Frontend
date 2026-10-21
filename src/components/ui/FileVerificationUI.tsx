@@ -5,6 +5,7 @@ import { DocumentRow } from './DocumentRow';
 import { EmptyState } from './emptyState';
 import { Skeleton } from './Skeleton';
 import type { UserRole } from '../../types/auth';
+import { queryKeys } from '../../lib/queryKeys';
 
 interface FileVerificationUIProps {
   adoptionId?: string;
@@ -24,7 +25,7 @@ export function FileVerificationUI({
   onAddDocument,
 }: FileVerificationUIProps) {
   const { data: documents, isLoading } = useApiQuery(
-    ['documents', adoptionId || disputeId],
+    queryKeys.documents.list(adoptionId || disputeId),
     () => documentService.getDocuments(adoptionId, disputeId)
   );
 

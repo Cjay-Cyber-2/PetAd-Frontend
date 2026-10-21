@@ -1,5 +1,7 @@
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import type { Notification, NotificationFilter, NotificationsPage } from "../types/notifications";
+import { queryKeys } from "../lib/queryKeys";
+import { queryKeys } from "../lib/queryKeys";
 
 const PAGE_SIZE = 10;
 
@@ -29,7 +31,7 @@ export function useNotifications(filter: NotificationFilter): UseNotificationsRe
   const queryClient = useQueryClient();
 
   const query = useInfiniteQuery({
-    queryKey: ["notifications", filter],
+    queryKey: queryKeys.notifications.list(filter),
     queryFn: ({ pageParam }) =>
       fetchNotificationsPage(pageParam as string | undefined, filter),
     initialPageParam: undefined as string | undefined,
@@ -45,7 +47,7 @@ export function useNotifications(filter: NotificationFilter): UseNotificationsRe
     queryClient.setQueriesData<{
       pages: NotificationsPage[];
       pageParams: (string | undefined)[];
-    }>({ queryKey: ["notifications"] }, (old) => {
+    }>({ queryKey: queryKeys.notifications.list() }, (old) => {
       if (!old) return old;
       return {
         ...old,

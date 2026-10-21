@@ -6,6 +6,8 @@ import { server } from "../../mocks/server";
 import { describe, it, expect, vi } from "vitest";
 import React from "react";
 import type { AdoptionDetails } from "../../types/adoption";
+import { queryKeys } from "../../lib/queryKeys";
+import { queryKeys } from "../../lib/queryKeys";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -89,7 +91,7 @@ describe("useMutateCompleteAdoption", () => {
 
     it("completes successfully with no error", async () => {
       const { queryClient, wrapper } = createWrapper();
-      queryClient.setQueryData<AdoptionDetails>(["adoption", "adoption-1"], MOCK_ADOPTION);
+      queryClient.setQueryData<AdoptionDetails>(queryKeys.adoptions.detail("adoption-1"), MOCK_ADOPTION);
 
       const invalidateSpy = vi.fn();
       queryClient.invalidateQueries = invalidateSpy;
@@ -106,7 +108,7 @@ describe("useMutateCompleteAdoption", () => {
 
       expect(result.current.isError).toBe(false);
       await waitFor(() => expect(invalidateSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ queryKey: ["adoption", "adoption-1"] }),
+        expect.objectContaining({ queryKey: queryKeys.adoptions.detail("adoption-1") }),
       ));
     });
   });
@@ -145,7 +147,7 @@ describe("useMutateCompleteAdoption", () => {
       );
 
       const { queryClient, wrapper } = createWrapper();
-      queryClient.setQueryData<AdoptionDetails>(["adoption", "adoption-1"], MOCK_ADOPTION);
+      queryClient.setQueryData<AdoptionDetails>(queryKeys.adoptions.detail("adoption-1"), MOCK_ADOPTION);
 
       const { result } = renderHook(
         () => useMutateCompleteAdoption("adoption-1"),
@@ -174,7 +176,7 @@ describe("useMutateCompleteAdoption", () => {
     it("restores previous cache state when mutation fails", async () => {
       const { queryClient, wrapper } = createWrapper();
       // Seed cache with the original adoption state. Ensure ID matches.
-      queryClient.setQueryData<AdoptionDetails>(["adoption", "fail"], { ...MOCK_ADOPTION, id: "fail" });
+      queryClient.setQueryData<AdoptionDetails>(queryKeys.adoptions.detail("fail"), { ...MOCK_ADOPTION, id: "fail" });
 
       const { result } = renderHook(
         () => useMutateCompleteAdoption("fail"),
@@ -198,7 +200,7 @@ describe("useMutateCompleteAdoption", () => {
 
     it("clears optimistic update and shows error state on failure", async () => {
       const { queryClient, wrapper } = createWrapper();
-      queryClient.setQueryData<AdoptionDetails>(["adoption", "fail"], MOCK_ADOPTION);
+      queryClient.setQueryData<AdoptionDetails>(queryKeys.adoptions.detail("fail"), MOCK_ADOPTION);
 
       const { result } = renderHook(
         () => useMutateCompleteAdoption("fail"),

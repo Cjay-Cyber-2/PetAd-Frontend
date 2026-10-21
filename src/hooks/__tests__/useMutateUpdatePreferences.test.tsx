@@ -5,6 +5,8 @@ import { renderHook, act, waitFor } from "@testing-library/react";
 import { getApiClient } from "../../lib/api-client";
 import { useMutateUpdatePreferences } from "../useMutateUpdatePreferences";
 import type { NotificationPreferences } from "../../types/notifications";
+import { queryKeys } from "../../lib/queryKeys";
+import { queryKeys } from "../../lib/queryKeys";
 
 vi.mock("../../lib/api-client", () => ({
   getApiClient: vi.fn(),
@@ -75,7 +77,7 @@ describe("useMutateUpdatePreferences", () => {
     );
 
     const { queryClient, wrapper } = createWrapper();
-    queryClient.setQueryData(["notificationPreferences"], initialPreferences);
+    queryClient.setQueryData(queryKeys.notifications.preferences(), initialPreferences);
 
     const { result } = renderHook(() => useMutateUpdatePreferences(), { wrapper });
 
@@ -84,7 +86,7 @@ describe("useMutateUpdatePreferences", () => {
     });
 
     await waitFor(() => {
-      expect(queryClient.getQueryData(["notificationPreferences"])).toEqual(updatedPreferences);
+      expect(queryClient.getQueryData(queryKeys.notifications.preferences())).toEqual(updatedPreferences);
     });
 
     act(() => {
@@ -92,7 +94,7 @@ describe("useMutateUpdatePreferences", () => {
     });
 
     await waitFor(() => {
-      expect(queryClient.getQueryData(["notificationPreferences"])).toEqual(initialPreferences);
+      expect(queryClient.getQueryData(queryKeys.notifications.preferences())).toEqual(initialPreferences);
     });
   });
 });
