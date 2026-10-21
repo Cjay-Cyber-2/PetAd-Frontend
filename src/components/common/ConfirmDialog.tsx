@@ -45,10 +45,11 @@ export function ConfirmDialog({
   useEffect(() => {
     if (!open) return;
     previouslyFocused.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const trigger = triggerRef?.current ?? null;
     cancelButtonRef.current?.focus();
     return () => {
-      const trigger = triggerRef?.current ?? previouslyFocused.current;
-      trigger?.focus();
+      const target = trigger ?? previouslyFocused.current;
+      target?.focus();
     };
   }, [open, triggerRef]);
 
