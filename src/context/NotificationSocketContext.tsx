@@ -18,6 +18,12 @@ export interface NotificationSocketContextValue {
   reconnectAttempts: number;
   /** Timestamp of last successful connection, or null */
   lastConnectedAt: number | null;
+  /**
+   * Most recent notification frame received on the socket, or null before
+   * the first message. Consumers (e.g. useAdoptionStatus) use it to react
+   * to entity-specific events without opening their own connection.
+   */
+  lastMessage: NotificationMessage | null;
   /** Manually trigger a reconnection attempt */
   reconnect: () => void;
 }
@@ -30,9 +36,14 @@ const RECONNECT_MAX_DELAY = 30000;
 /** Query prefixes refreshed when a notification arrives or after a reconnect. */
 const NOTIFICATION_QUERY_KEYS = [["notifications"], UNREAD_NOTIFICATION_COUNT_QUERY_KEY] as const;
 
-interface NotificationMessage {
+export interface NotificationMessage {
   type: string;
-  payload: { title?: unknown; message?: unknown };
+  payload: {
+    title?: unknown;
+    message?: unknown;
+    /** Entity id this notification refers to (e.g. an adoption id). */
+    metadata?: { resourceId?: unknown };
+  };
 }
 
 function parseNotificationMessage(data: unknown): NotificationMessage | null {
@@ -76,6 +87,7 @@ export function NotificationSocketProvider({
   const [connectionState, setConnectionState] = useState<NotificationConnectionState>(initialState);
   const [reconnectAttempts, setReconnectAttempts] = useState(0);
   const [lastConnectedAt, setLastConnectedAt] = useState<number | null>(null);
+  const [lastMessage, setLastMessage] = useState<NotificationMessage | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mountedRef = useRef(true);
@@ -152,6 +164,7 @@ export function NotificationSocketProvider({
         const message = parseNotificationMessage(event.data);
         if (!message) return;
 
+        setLastMessage(message);
         refreshNotificationQueries();
 
         const { title, message: body } = message.payload;
@@ -229,6 +242,7 @@ export function NotificationSocketProvider({
     connectionState,
     reconnectAttempts,
     lastConnectedAt,
+    lastMessage,
     reconnect,
   };
 
