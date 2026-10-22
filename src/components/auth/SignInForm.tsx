@@ -74,6 +74,17 @@ export function SignInForm() {
                 password: formData.password,
             });
             localStorage.setItem("auth_token", response.token);
+            // Persist the logged-in user's id so messaging can identify the
+            // current user (e.g. to hide "Message owner" on your own listings).
+            localStorage.setItem(
+              "petad_user",
+              JSON.stringify({
+                id: response.user.id,
+                email: response.user.email,
+                fullName: response.user.fullName,
+                role: response.user.role,
+              }),
+            );
 
             const returnTo = getReturnTo(searchParams);
             sessionStorage.removeItem("petad_return_to");
