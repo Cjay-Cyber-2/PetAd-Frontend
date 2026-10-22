@@ -5,6 +5,7 @@ import { useMutateReviewDocument } from '../../hooks/useMutateReviewDocument';
 import { DocumentIntegrityBadge } from './DocumentIntegrityBadge';
 import { Skeleton } from './Skeleton';
 import type { Document } from '../../types/documents';
+import { logger } from "../../lib/logger";
 
 interface AdminDocumentReviewPanelProps {
   adoptionId: string;
@@ -196,7 +197,7 @@ export function AdminDocumentReviewPanel({
         documents.find((d) => d.id === documentId)!
       );
     } catch (error) {
-      console.error('Failed to approve document:', error);
+      logger.error('Failed to approve document:', error);
     }
   };
 
@@ -207,7 +208,7 @@ export function AdminDocumentReviewPanel({
         documents.find((d) => d.id === documentId)!
       );
     } catch (error) {
-      console.error('Failed to reject document:', error);
+      logger.error('Failed to reject document:', error);
     }
   };
 
