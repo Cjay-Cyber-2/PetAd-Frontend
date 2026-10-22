@@ -81,7 +81,15 @@ export function DataTable<T>({
               <tbody className="divide-y divide-slate-100">
                 {loading ? <tr><td colSpan={columns.length + 1} role="status" className="px-4 py-8 text-center text-slate-500">Loading records…</td></tr> : rows.length === 0 ? <tr><td colSpan={columns.length + 1} className="px-4 py-10 text-center text-slate-500">{emptyMessage}</td></tr> : rows.map((row) => {
                   const id = getRowId(row);
-                  return <tr key={id} className="hover:bg-slate-50"><td className="px-4 py-3"><input type="checkbox" aria-label={`Select row ${id}`} checked={selected.has(id)} onChange={() => setSelected((previous) => { const next = new Set(previous); next.has(id) ? next.delete(id) : next.add(id); return next; })} /></td>{columns.map((column) => <td key={column.id} className={`px-4 py-3 text-slate-800 ${column.className ?? ""}`}>{column.accessor(row)}</td>)}</tr>;
+                  return <tr key={id} className="hover:bg-slate-50"><td className="px-4 py-3"><input type="checkbox" aria-label={`Select row ${id}`} checked={selected.has(id)} onChange={() => setSelected((previous) => {
+                    const next = new Set(previous);
+                    if (next.has(id)) {
+                      next.delete(id);
+                    } else {
+                      next.add(id);
+                    }
+                    return next;
+                  })} /></td>{columns.map((column) => <td key={column.id} className={`px-4 py-3 text-slate-800 ${column.className ?? ""}`}>{column.accessor(row)}</td>)}</tr>;
                 })}
               </tbody>
             </table>
