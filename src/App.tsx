@@ -16,6 +16,7 @@ const RegisterPage = lazy(() => import("./pages/RegisterPage"));
 const ForgetPasswordPage = lazy(() => import("./pages/forgetPasswordPage"));
 const InterestPage = lazy(() => import("./pages/interestPage"));
 const NotificationPage = lazy(() => import("./pages/notificationPage"));
+const MessagesPage = lazy(() => import("./pages/MessagesPage"));
 const NotificationPreferencesPage = lazy(() =>
   import("./pages/NotificationPreferencesPage"),
 );
@@ -95,6 +96,8 @@ function App() {
             <Route path="/favourites" element={<FavouritePage />} />
             <Route path="/interests" element={<InterestPage />} />
             <Route path="/notifications" element={<NotificationPage />} />
+            <Route path="/messages" element={<MessagesPage />} />
+            <Route path="/messages/:conversationId" element={<MessagesPage />} />
             <Route
               path="/notification-preferences"
               element={<NotificationPreferencesPage />}

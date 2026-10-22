@@ -3,6 +3,7 @@ import { FormInput, PasswordInput, GoogleButton, OrDivider, SubmitButton } from 
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { authService } from "../../api/authService";
 import { ApiError } from "../../lib/api-errors";
+import { persistCurrentUser } from "../../hooks/useCurrentUser";
 
 interface SignInFormData {
     email: string;
@@ -74,6 +75,7 @@ export function SignInForm() {
                 password: formData.password,
             });
             localStorage.setItem("auth_token", response.token);
+            persistCurrentUser(response.user);
 
             const returnTo = getReturnTo(searchParams);
             sessionStorage.removeItem("petad_return_to");
