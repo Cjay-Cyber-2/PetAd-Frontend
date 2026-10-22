@@ -4,6 +4,10 @@ import { RefreshCw } from "lucide-react";
 import { useApprovalList } from "../features/approval/hooks/useApprovalList";
 import { Skeleton } from "../components/ui/Skeleton";
 import { EmptyState } from "../components/ui/emptyState";
+import {
+  getStatusMeta,
+  STATUS_COLOR_CLASSES,
+} from "../lib/statusConfig";
 
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -16,9 +20,9 @@ type FilterTab = "all" | "PENDING" | "APPROVED" | "REJECTED";
 
 const FILTER_TABS: { value: FilterTab; label: string }[] = [
   { value: "all", label: "All" },
-  { value: "PENDING", label: "Pending" },
-  { value: "APPROVED", label: "Approved" },
-  { value: "REJECTED", label: "Rejected" },
+  { value: "PENDING", label: getStatusMeta("approval", "PENDING").label },
+  { value: "APPROVED", label: getStatusMeta("approval", "APPROVED").label },
+  { value: "REJECTED", label: getStatusMeta("approval", "REJECTED").label },
 ];
 
 /** Distinct empty-state copy for each filter tab. */
@@ -101,9 +105,26 @@ function ApprovalErrorState({ onRetry }: { onRetry: () => void }) {
 
 // ─── Status label helper ─────────────────────────────────────────────────────
 
-function statusLabel(status: string | undefined): string {
-  if (!status) return "—";
-  return status.charAt(0) + status.slice(1).toLowerCase();
+/**
+ * Approval status pill.
+ *
+ * Label, colour and icon come from the shared status config so the approval
+ * list matches every other approval badge in the app.
+ */
+function ApprovalStatusPill({ status }: { status: string }) {
+  const meta = getStatusMeta("approval", status);
+  const tokenClasses = STATUS_COLOR_CLASSES[meta.color];
+
+  return (
+    <span
+      className={[
+        "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider",
+        `${tokenClasses.softBg} ${tokenClasses.text}`,
+      ].join(" ")}
+    >
+      {meta.label}
+    </span>
+  );
 }
 
 // ─── Main component ──────────────────────────────────────────────────────────
@@ -239,18 +260,9 @@ export default function ApprovalListPage() {
                         ? new Date(item.submittedAt).toLocaleDateString()
                         : "—"}
                     </span>
-                    <span
-                      className={[
-                        "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider",
-                        item.status === "APPROVED"
-                          ? "bg-green-50 text-green-700"
-                          : item.status === "REJECTED"
-                            ? "bg-red-50 text-red-700"
-                            : "bg-amber-50 text-amber-700",
-                      ].join(" ")}
-                    >
-                      {statusLabel(item.status)}
-                    </span>
+                    {item.status ? (
+                      <ApprovalStatusPill status={item.status} />
+                    ) : null}
                   </div>
                 </div>
               ))}
