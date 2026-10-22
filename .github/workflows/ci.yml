@@ -21,7 +21,13 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm install --maxsockets 1 --retry 3
+        run: npm ci --maxsockets 1 --retry 3
+
+      - name: Dependency vulnerability audit
+        run: npm audit --audit-level=high
+
+      - name: Verify dependency lockfiles are unchanged
+        run: git diff --exit-code -- package-lock.json pnpm-lock.yaml
 
       - name: Lint check
         run: npm run lint
@@ -46,7 +52,7 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm install --maxsockets 1 --retry 3
+        run: npm ci --maxsockets 1 --retry 3
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps

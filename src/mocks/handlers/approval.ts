@@ -1,6 +1,9 @@
 import { http, HttpResponse, delay } from "msw";
 
-const BASE_URL = "http://localhost:3000/api";
+// Wildcard origin: these handlers must match both the Vitest/jsdom origin
+// (http://localhost:3000) and the Vite dev origin (http://localhost:4321),
+// because apiClient uses a relative "/api" base whenever VITE_MSW=true.
+const BASE_URL = "*/api";
 
 // ─── Handlers ─────────────────────────────────────────────────────────────────
 // NOTE: Real backend contract for approval endpoints pending final confirmation per Epic A.
@@ -199,6 +202,35 @@ export const approvalHandlers = [
 			total: filtered.length,
 			page,
 			limit,
+		});
+	}),
+
+	// POST /api/approvals/:id/approve — approvalService.approveRequest
+	// Used by the Caretaker dashboard's in-place Approval modal.
+	http.post("*/api/approvals/:id/approve", async ({ params }) => {
+		await delay(150);
+		return HttpResponse.json({
+			id: String(params.id),
+			approverName: "You",
+			approverRole: "Caretaker",
+			status: "APPROVED",
+			timestamp: new Date().toISOString(),
+		});
+	}),
+
+	// POST /api/approvals/:id/reject — approvalService.rejectRequest
+	// The payload shape mirrors rejectRequestSchema (reason ≥ 20 chars, validated
+	// client-side before this request is ever sent).
+	http.post("*/api/approvals/:id/reject", async ({ request, params }) => {
+		await delay(150);
+		const body = (await request.json()) as { reason?: string };
+		return HttpResponse.json({
+			id: String(params.id),
+			approverName: "You",
+			approverRole: "Caretaker",
+			status: "REJECTED",
+			reason: body.reason,
+			timestamp: new Date().toISOString(),
 		});
 	}),
 ];

@@ -4,7 +4,7 @@ import { messageService, type SendMessageInput } from "../api/messageService";
 import { applyMessageToConversations, findMessage, removeMessage, upsertMessage, type MessagesCache } from "../messageCache";
 import type { Conversation, Message, MessageAttachment } from "../types/message";
 import { isImageFile } from "../uploadRules";
-import { useCurrentUser } from "../../../hooks/useCurrentUser";
+import { useMessagingUser } from "./useMessagingUser";
 import { messageKeys } from "./useMessages";
 
 interface Outbox {
@@ -58,7 +58,7 @@ export interface SendArgs {
  */
 export function useSendMessage(conversationId: string) {
   const queryClient = useQueryClient();
-  const user = useCurrentUser();
+  const user = useMessagingUser();
   const threadKey = messageKeys.thread(conversationId);
 
   const patchThread = useCallback(

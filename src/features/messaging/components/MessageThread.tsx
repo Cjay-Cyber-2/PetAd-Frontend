@@ -1,7 +1,7 @@
 import { Fragment, useCallback, useLayoutEffect, useMemo, useRef, useState, type UIEvent } from "react";
 import { format, isToday, isYesterday, parseISO } from "date-fns";
 import { ArrowDown } from "lucide-react";
-import { useCurrentUser } from "../../../hooks/useCurrentUser";
+import { useMessagingUser } from "../hooks/useMessagingUser";
 import { flattenMessages } from "../messageCache";
 import { useMarkMessagesRead } from "../hooks/useMarkMessagesRead";
 import { useMessages } from "../hooks/useMessages";
@@ -53,7 +53,7 @@ export function MessageThread({ conversationId, className = "h-full" }: MessageT
 }
 
 function ThreadInner({ conversationId, className }: Required<MessageThreadProps>) {
-  const user = useCurrentUser();
+  const user = useMessagingUser();
   const query = useMessages(conversationId);
   const { retry, remove } = useSendMessage(conversationId);
   const { observe } = useMarkMessagesRead(conversationId);

@@ -5,7 +5,7 @@ import {
   createNotificationSocket,
   type NotificationSocketOptions,
 } from "../../../lib/realtime/notificationSocket";
-import { useCurrentUser } from "../../../hooks/useCurrentUser";
+import { useMessagingUser } from "./useMessagingUser";
 import { isTabActive } from "./useMarkMessagesRead";
 import { messageKeys } from "./useMessages";
 import {
@@ -75,7 +75,7 @@ export function useMessageSocketSync({
   socketOptions,
 }: UseMessageSocketSyncOptions = {}): void {
   const queryClient = useQueryClient();
-  const user = useCurrentUser();
+  const user = useMessagingUser();
 
   const activeRef = useRef(activeConversationId);
   const userIdRef = useRef(user?.id);

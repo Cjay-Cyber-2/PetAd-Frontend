@@ -8,7 +8,7 @@ optimistic send and attachments, and live delivery over a WebSocket.
 | Module | `src/features/messaging/` |
 | Page / routes | `src/pages/MessagesPage.tsx` at `/messages` and `/messages/:conversationId` (protected) |
 | Mocks | `src/mocks/handlers/messages.ts` (`resetMessagesMock()` for tests) |
-| Current user | `src/hooks/useCurrentUser.ts` (written at login by `SignInForm`) |
+| Current user | `src/features/messaging/hooks/useMessagingUser.ts` (reads the `petad_user` entry `SignInForm` writes at login) |
 
 ## API contract (mocked until the backend lands)
 
