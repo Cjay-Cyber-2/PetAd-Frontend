@@ -17,7 +17,8 @@ export default function AdminOverviewPage() {
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {cards.map((card, index) => {
           const stat = stats[index];
-          return stat ? <StatCard key={card.key} {...card} value={stat.data?.count} isLoading={stat.isLoading} isError={stat.isError} onRetry={() => { void stat.refetch(); }} /> : null;
+          const { key: cardKey, ...cardProps } = card;
+          return stat ? <StatCard key={cardKey} {...cardProps} value={stat.data?.count} isLoading={stat.isLoading} isError={stat.isError} onRetry={() => { void stat.refetch(); }} /> : null;
         })}
       </div>
     </div>
