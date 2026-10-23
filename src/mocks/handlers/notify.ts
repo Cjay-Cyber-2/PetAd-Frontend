@@ -23,13 +23,19 @@ function iso(base: Date, hours: number): string {
   return date.toISOString();
 }
 
+// Seeded "today" items are relative to startup so they can never be dated in
+// the future (which would push them ahead of newly emitted live events).
+function minutesAgo(minutes: number): string {
+  return new Date(today.getTime() - minutes * 60_000).toISOString();
+}
+
 let mockNotifications: Notification[] = [
   {
     id: "notif-001",
     type: "ESCROW_FUNDED" as NotificationType,
     title: "Escrow Funded",
     message: "The escrow for adoption #adoption-001 has been funded and is ready.",
-    time: iso(today, 10),
+    time: minutesAgo(120),
     isRead: false,
     hasArrow: true,
     metadata: { resourceId: "adoption-001" },
@@ -39,7 +45,7 @@ let mockNotifications: Notification[] = [
     type: "APPROVAL_REQUESTED" as NotificationType,
     title: "Approval Requested",
     message: "A new approval request is waiting for your review on adoption #adoption-002.",
-    time: iso(today, 11),
+    time: minutesAgo(60),
     isRead: false,
     hasArrow: true,
     metadata: { resourceId: "adoption-002" },
