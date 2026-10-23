@@ -254,7 +254,18 @@ export function emitMockNotification(
   const sample =
     SAMPLE_EVENTS.find((event) => event.type === overrides.type) ??
     SAMPLE_EVENTS[(emittedCount - 1) % SAMPLE_EVENTS.length];
-  const timestamp = new Date().toISOString();
+  // Live events are, by definition, the newest notifications. The seeded
+  // fixtures are stamped at fixed hours "today", so a dev (or test) running
+  // before those hours would otherwise see a fresh event sort *below* a seed.
+  // Stamp emissions strictly after the newest known entry to keep
+  // GET /api/notifications ordering deterministic wall-clock independent.
+  const newestKnownMs = mockNotifications.reduce(
+    (max, notification) => Math.max(max, new Date(notification.time).getTime()),
+    0,
+  );
+  const timestamp = new Date(
+    Math.max(Date.now(), newestKnownMs + 1),
+  ).toISOString();
   const id = `notif-live-${Date.now()}-${emittedCount}`;
 
   const envelope: MockNotificationEnvelope = {
