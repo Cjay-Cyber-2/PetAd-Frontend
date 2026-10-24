@@ -7,7 +7,6 @@ import { useRoleGuard } from "../../hooks/useRoleGuard";
 import { DeferredNotificationCentreDropdown } from "../notifications";
 import { ThemeToggle } from "../theme-toggle";
 import { FreighterWalletButton } from "../wallet/FreighterWalletButton";
-import { MessagesLink } from "../../features/messaging/components/MessagesLink";
 
 const baseNavLinks = [
   { label: "Home", path: "/home", icon: House },
@@ -86,8 +85,6 @@ export function Navbar() {
             2
           </span>
         </Link>
-
-        <MessagesLink />
 
         <ThemeToggle />
 
