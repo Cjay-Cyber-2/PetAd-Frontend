@@ -1,108 +1,156 @@
-import { useQueryClient, type QueryKey } from "@tanstack/react-query";
-import { useApiMutation } from "../../../hooks/useApiMutation";
-import { messagingService } from "../api/messagingService";
-import { CONVERSATIONS_QUERY_KEY } from "./useConversations";
-import type {
-  Conversation,
-  Message,
-  SendMessageVariables,
-} from "../types";
+import { useCallback } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { messageService, type SendMessageInput } from "../api/messageService";
+import { applyMessageToConversations, findMessage, removeMessage, upsertMessage, type MessagesCache } from "../messageCache";
+import type { Conversation, Message, MessageAttachment } from "../types/message";
+import { isImageFile } from "../uploadRules";
+import { useMessagingUser } from "./useMessagingUser";
+import { messageKeys } from "./useMessages";
 
-export interface SendMessageContext {
+interface Outbox {
   conversationId: string;
-  detailSnapshot: Conversation | undefined;
-  listSnapshot: Conversation[] | undefined;
-}
-
-function optimisticMessage(
-  vars: SendMessageVariables,
-  recipientId: string,
-): Message {
-  return {
-    id: `optimistic-${Date.now()}`,
-    conversationId: vars.conversationId,
-    senderId: vars.senderId,
-    recipientId,
-    body: vars.body,
-    createdAt: new Date().toISOString(),
-    status: "sending",
-  };
+  input: SendMessageInput;
+  objectUrls: string[];
 }
 
 /**
- * useSendMessage
- *
- * Optimistic send with rollback and retry:
- *  1. `onMutate` appends a temporary `sending` message to the conversation
- *     thread and rewrites the conversation list entry.
- *  2. On failure `onRollback` restores both snapshots (temp message removed,
- *     unread counts restored) and the mutation retries.
- *  3. On success the `["conversations"]` prefix is invalidated so the server
- *     truth replaces optimistic state.
+ * Sends that haven't succeeded yet, by clientId. Module-level so Retry still
+ * works after the user switches threads and comes back.
  */
-export function useSendMessage() {
+const outbox = new Map<string, Outbox>();
+
+function newClientId(): string {
+  return typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID()
+    : `c-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+function revoke(entry: Outbox | undefined): void {
+  if (!entry || typeof URL.revokeObjectURL !== "function") return;
+  entry.objectUrls.forEach((url) => URL.revokeObjectURL(url));
+}
+
+function buildAttachments(files: File[], objectUrls: string[]): MessageAttachment[] {
+  return files.map((file, index) => {
+    let url: string | undefined;
+    if (isImageFile(file) && typeof URL.createObjectURL === "function") {
+      url = URL.createObjectURL(file);
+      objectUrls.push(url);
+    }
+    return { id: `tmp-att-${index}`, fileName: file.name, mimeType: file.type, size: file.size, url };
+  });
+}
+
+export interface SendArgs {
+  body: string;
+  files?: File[];
+}
+
+/**
+ * Optimistic send.
+ *
+ * - `send()` puts a temp message (`status: "sending"`) in the thread instantly.
+ * - Success replaces it with the server message (`sent`); failure flips it to
+ *   `failed`, where the UI offers `retry` / `remove`.
+ * - Every attempt carries the same `clientId`, and the cache collapses copies
+ *   by `clientId`, so a retry (or a socket echo racing the HTTP response)
+ *   never duplicates the message.
+ */
+export function useSendMessage(conversationId: string) {
   const queryClient = useQueryClient();
+  const user = useMessagingUser();
+  const threadKey = messageKeys.thread(conversationId);
 
-  const { mutate, mutateAsync, isPending, isError, error } = useApiMutation<
-    Message,
-    SendMessageVariables
-  >(async (vars) => {
-    const conversation = queryClient.getQueryData<Conversation>([
-      "conversations",
-      vars.conversationId,
-    ]);
-    const recipientId =
-      conversation?.participantIds?.find((id) => id !== vars.senderId) ??
-      vars.senderId;
-
-    const optimistic = optimisticMessage(vars, recipientId);
-    const detailKey: QueryKey = ["conversations", vars.conversationId];
-    queryClient.setQueryData<Conversation>(detailKey, (old) =>
-      old ? { ...old, messages: [...(old.messages ?? []), optimistic] } : old,
-    );
-
-    const listSnapshot = queryClient.getQueryData<Conversation[]>(
-      CONVERSATIONS_QUERY_KEY,
-    );
-    queryClient.setQueryData<Conversation[] | undefined>(
-      CONVERSATIONS_QUERY_KEY,
-      listSnapshot?.map((conversation) =>
-        conversation.id === vars.conversationId
-          ? { ...conversation, lastMessage: optimistic, updatedAt: optimistic.createdAt }
-          : conversation,
-      ),
-    );
-
-    return messagingService.sendMessage(vars.conversationId, vars.body);
-  }, {
-    retry: 0,
-    invalidates: [["conversations"]],
-    onOptimisticUpdate: async (vars) => {
-      const detailKey: QueryKey = ["conversations", vars.conversationId];
-      const detailSnapshot = queryClient.getQueryData<Conversation>(detailKey);
-      const listSnapshot = queryClient.getQueryData<Conversation[]>(
-        CONVERSATIONS_QUERY_KEY,
-      );
-      return {
-        conversationId: vars.conversationId,
-        detailSnapshot,
-        listSnapshot,
-      };
+  const patchThread = useCallback(
+    (update: (data: MessagesCache | undefined) => MessagesCache | undefined) => {
+      queryClient.setQueryData<MessagesCache>(threadKey, update);
     },
-    onRollback: (snapshot) => {
-      const context = (snapshot ?? {}) as SendMessageContext;
-      queryClient.setQueryData<Conversation | undefined>(
-        ["conversations", context.conversationId] as QueryKey,
-        context.detailSnapshot,
+    [queryClient, threadKey],
+  );
+
+  const mutation = useMutation<Message, Error, SendMessageInput>({
+    mutationFn: (input) => messageService.sendMessage(conversationId, input),
+
+    onSuccess: (message, input) => {
+      const sent: Message = { ...message, clientId: input.clientId, status: "sent" };
+      const cached = queryClient.getQueryData<MessagesCache>(threadKey);
+      if (cached) patchThread((data) => upsertMessage(data, sent));
+      else void queryClient.invalidateQueries({ queryKey: threadKey });
+
+      queryClient.setQueryData<Conversation[]>(messageKeys.conversations, (list) =>
+        applyMessageToConversations(list, sent, false),
       );
-      queryClient.setQueryData<Conversation[] | undefined>(
-        CONVERSATIONS_QUERY_KEY,
-        context.listSnapshot,
-      );
+      revoke(outbox.get(input.clientId));
+      outbox.delete(input.clientId);
+    },
+
+    onError: (_error, input) => {
+      patchThread((data) => {
+        const existing = findMessage(data, input.clientId);
+        return existing ? upsertMessage(data, { ...existing, status: "failed" }) : data;
+      });
     },
   });
 
-  const sendMessage = (variables: SendMessageVariables) => mutate(variables);
+  const dispatch = useCallback(
+    (input: SendMessageInput) => {
+      patchThread((data) => {
+        const existing = findMessage(data, input.clientId);
+        if (existing) return upsertMessage(data, { ...existing, status: "sending" });
 
-  return { sendMessage, mutateAsync, isPending, isError, error };
+        const entry = outbox.get(input.clientId);
+        const objectUrls = entry?.objectUrls ?? [];
+        const temp: Message = {
+          id: `tmp-${input.clientId}`,
+          clientId: input.clientId,
+          conversationId,
+          senderId: user?.id ?? "me",
+          senderName: user?.fullName ?? "You",
+          body: input.body,
+          attachments: buildAttachments(input.files ?? [], objectUrls),
+          createdAt: new Date().toISOString(),
+          status: "sending",
+        };
+        return upsertMessage(data, temp);
+      });
+      mutation.mutate(input);
+    },
+    [conversationId, mutation, patchThread, user],
+  );
+
+  const send = useCallback(
+    ({ body, files }: SendArgs): string => {
+      const input: SendMessageInput = { body, files, clientId: newClientId() };
+      outbox.set(input.clientId, { conversationId, input, objectUrls: [] });
+      dispatch(input);
+      return input.clientId;
+    },
+    [conversationId, dispatch],
+  );
+
+  /** Re-sends a failed message with its original clientId. No-op for unknown ids. */
+  const retry = useCallback(
+    (clientId: string) => {
+      const entry = outbox.get(clientId);
+      if (entry) dispatch(entry.input);
+    },
+    [dispatch],
+  );
+
+  /** Discards a failed message. */
+  const remove = useCallback(
+    (clientId: string) => {
+      revoke(outbox.get(clientId));
+      outbox.delete(clientId);
+      patchThread((data) => removeMessage(data, clientId));
+    },
+    [patchThread],
+  );
+
+  return { send, retry, remove, isSending: mutation.isPending };
+}
+
+/** Test helper. */
+export function clearOutbox(): void {
+  outbox.clear();
 }
