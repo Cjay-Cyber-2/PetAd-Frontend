@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import dogImage from "../assets/dog.png";
 import dog1Image from "../assets/dog_1.png";
 import goldenRetriever from "../assets/golden_retriever.png";
-import { MessageOwnerButton } from "../features/messaging/components/MessageOwnerButton";
 
 
 interface PetListing {
@@ -42,7 +41,6 @@ const mockPet: PetListing = {
   location: "Lagos, Nigeria",
   images: [dogImage, dog1Image, goldenRetriever, dogImage],
   owner: {
-    id: "user-owner-1",
     name: "Angela Christoper",
     avatar: "https://i.pravatar.cc/150?img=47",
     email: "*****",
@@ -422,7 +420,6 @@ export default function PetListingDetailsPage() {
                   {intLoading ? <span className="pld-spinner" /> : null}
                   {isInterested ? "Interested ✓" : "Show Interest"}
                 </button>
-                <MessageOwnerButton petId={String(pet.id)} ownerId={pet.owner.id} />
               </div>
 
               <button className="pld-terms">Adoption, Terms & Condition</button>

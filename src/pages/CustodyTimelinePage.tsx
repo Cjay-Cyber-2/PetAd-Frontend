@@ -5,7 +5,6 @@ import { useCustodyTimeline, type CustodyTimelineEventType } from "../lib/hooks/
 import { useCustodyDetails } from "../lib/hooks/useCustodyDetails";
 import { CustodyExpiringBanner } from "../components/custody";
 import type { CustodyTimelineEvent } from "../api/custodyService";
-import { MessageOwnerButton } from "../features/messaging/components/MessageOwnerButton";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -117,15 +116,8 @@ export default function CustodyTimelinePage() {
             Custody
           </p>
           <h1 className="mt-2 text-3xl font-semibold">Custody Timeline</h1>
-          {custodyId && custodyDetails && (
-            <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <p className="mt-2 text-sm text-slate-400">ID: {custodyId}</p>
-              <MessageOwnerButton
-                petId={custodyDetails.petId}
-                ownerId={custodyDetails.ownerId}
-                className="self-start sm:self-auto"
-              />
-            </div>
+          {custodyId && (
+            <p className="mt-2 text-sm text-slate-400">ID: {custodyId}</p>
           )}
         </section>
 
