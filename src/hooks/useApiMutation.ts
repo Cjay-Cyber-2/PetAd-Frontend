@@ -39,6 +39,11 @@ export interface UseApiMutationOptions<TData, TVariables> {
     error: ApiError | null,
     variables: TVariables,
   ) => void;
+  /**
+   * Retry attempts before the mutation settles with an error. Defaults to 0
+   * (no retries) to preserve the historical behaviour of the shared hook.
+   */
+  retry?: number;
 }
 
 export interface UseApiMutationReturn<TData, TVariables> {
@@ -128,6 +133,7 @@ export function useApiMutation<TData, TVariables>(
     onSettled: (data, error, variables) => {
       options?.onSettled?.(data, error, variables);
     },
+    retry: options?.retry ?? 0,
   });
 
   return {
