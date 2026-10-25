@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClient } from './lib/query-client'
 import { ToastProvider } from './components/toast/ToastProvider'
+import { ForbiddenNotifier } from './components/ForbiddenNotifier'
 import { ThemeProvider } from './components/theme-provider'
 import { NotificationSocketProvider } from './context/NotificationSocketContext'
 import './index.css'
@@ -86,6 +87,7 @@ async function bootstrap() {
       <QueryClientProvider client={queryClient}>
         <ThemeProvider defaultTheme="system" storageKey="petad-ui-theme">
           <ToastProvider>
+            <ForbiddenNotifier />
             {/* Navbar's NotificationCentreDropdown consumes this context. */}
             <NotificationSocketProvider>
               <BrowserRouter> {/* 2. Wrap your App */}

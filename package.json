@@ -12,8 +12,10 @@
     "build": "npm run check:msw && tsc -b && vite build",
     "build:analyze": "tsc -b && vite build --mode analyze",
     "check:msw": "node scripts/check-msw-production.mjs --mode production",
+    "type-check": "tsc -b",
     "lint": "eslint .",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage --testTimeout=30000",
     "test:e2e": "playwright test",
     "e2e": "playwright test",
     "preview": "vite preview"
@@ -50,6 +52,7 @@
     "@types/react-copy-to-clipboard": "^5.0.7",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.1",
+    "@vitest/coverage-v8": "^4.1.12",
     "eslint": "^9.39.4",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",

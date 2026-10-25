@@ -1,4 +1,5 @@
 import { QueryClient, QueryCache } from "@tanstack/react-query";
+import { reportIfForbidden } from "./forbidden";
 
 function exponentialDelay(retryAttempt: number): number {
 	return Math.pow(2, retryAttempt) * 1000;
@@ -11,6 +12,8 @@ function logApiError(error: unknown): void {
 }
 
 function showToastForServerErrors(error: unknown): void {
+	// 403s get a fixed, friendly message (see lib/forbidden) instead of the raw error.
+	if (reportIfForbidden(error)) return;
 	if (
 		error &&
 		typeof error === "object" &&

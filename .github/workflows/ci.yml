@@ -6,21 +6,44 @@ on:
   pull_request:
     branches: [ main ]
 
+# A newer push to the same PR supersedes the older run. Runs on `main` are
+# never cancelled so every merge keeps a complete result.
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: 20.x
+
 jobs:
-  validate:
+  # Installs once and shares node_modules with the jobs below, so the rest of
+  # the pipeline never repeats `npm ci`.
+  install:
+    name: Install
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Use Node.js 20.x
+      - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20.x
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
+      - name: Restore node_modules
+        id: modules
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: node-modules-${{ runner.os }}-${{ env.NODE_VERSION }}-${{ hashFiles('package-lock.json') }}
+
       - name: Install dependencies
+        if: steps.modules.outputs.cache-hit != 'true'
         run: npm ci --maxsockets 1 --retry 3
 
       - name: Dependency vulnerability audit
@@ -29,14 +52,109 @@ jobs:
       - name: Verify dependency lockfiles are unchanged
         run: git diff --exit-code -- package-lock.json pnpm-lock.yaml
 
-      - name: Lint check
+  type-check:
+    name: Type check
+    needs: install
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Restore node_modules
+        uses: actions/cache/restore@v4
+        with:
+          path: node_modules
+          key: node-modules-${{ runner.os }}-${{ env.NODE_VERSION }}-${{ hashFiles('package-lock.json') }}
+          fail-on-cache-miss: true
+
+      - name: Type check
+        run: npm run type-check
+
+  lint:
+    name: Lint
+    needs: install
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Restore node_modules
+        uses: actions/cache/restore@v4
+        with:
+          path: node_modules
+          key: node-modules-${{ runner.os }}-${{ env.NODE_VERSION }}-${{ hashFiles('package-lock.json') }}
+          fail-on-cache-miss: true
+
+      - name: Lint
         run: npm run lint
 
-      - name: Build check
-        run: npm run build
+  test:
+    name: Unit tests
+    needs: install
+    runs-on: ubuntu-latest
 
-      - name: Run unit tests
-        run: npm test
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Restore node_modules
+        uses: actions/cache/restore@v4
+        with:
+          path: node_modules
+          key: node-modules-${{ runner.os }}-${{ env.NODE_VERSION }}-${{ hashFiles('package-lock.json') }}
+          fail-on-cache-miss: true
+
+      - name: Run unit tests with coverage
+        run: npm run test:coverage
+
+      - name: Upload coverage report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage/
+          retention-days: 7
+
+  build:
+    name: Build
+    needs: install
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Restore node_modules
+        uses: actions/cache/restore@v4
+        with:
+          path: node_modules
+          key: node-modules-${{ runner.os }}-${{ env.NODE_VERSION }}-${{ hashFiles('package-lock.json') }}
+          fail-on-cache-miss: true
+
+      - name: Build
+        run: npm run build
 
   e2e:
     runs-on: ubuntu-latest
@@ -45,10 +163,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Use Node.js 20.x
+      - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20.x
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
       - name: Install dependencies
@@ -67,3 +185,25 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 7
+
+  # Single check to require in branch protection: it is red if any job above is
+  # red, failed, or was skipped, so a PR cannot merge unless the whole pipeline
+  # passed.
+  ci-success:
+    name: CI success
+    if: ${{ always() }}
+    needs: [install, type-check, lint, test, build, e2e]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Require every job to have passed
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "Job results: $RESULTS"
+          for result in $RESULTS; do
+            if [ "$result" != "success" ]; then
+              echo "::error::At least one required job did not succeed."
+              exit 1
+            fi
+          done
