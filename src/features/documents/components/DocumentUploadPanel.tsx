@@ -72,7 +72,7 @@ export function DocumentUploadPanel() {
   }
 
   return (
-    <section aria-label="Upload document" className="flex flex-col gap-3">
+    <section aria-label="Document upload" className="flex flex-col gap-3">
       <label htmlFor="document-file" className="text-sm font-medium text-gray-800">
         Upload document
       </label>

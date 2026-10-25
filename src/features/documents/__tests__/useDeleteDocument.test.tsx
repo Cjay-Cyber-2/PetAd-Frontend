@@ -83,6 +83,9 @@ describe("DocumentList delete", () => {
         status: "IN_REVIEW",
       }),
     ];
+    vi.mocked(documentService.getDocuments).mockReset();
+    vi.mocked(documentService.deleteDocument).mockReset();
+    vi.mocked(documentService.replaceDocument).mockReset();
     vi.mocked(documentService.getDocuments).mockImplementation(async () => [...serverDocs]);
     vi.mocked(documentService.deleteDocument).mockImplementation(async (id: string) => {
       const target = serverDocs.find((doc) => doc.id === id);

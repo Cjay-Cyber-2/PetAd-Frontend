@@ -3,7 +3,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { ReactElement } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "../../../lib/api-errors";
-import { documentService } from "../../../api/documentService";
+import { documentService, type UploadedDocument } from "../../../api/documentService";
 import { ReplaceDocumentButton } from "../components/ReplaceDocumentButton";
 import { DocumentStatusBadge } from "../components/DocumentStatusBadge";
 import { DocumentUploadPanel } from "../components/DocumentUploadPanel";
@@ -34,6 +34,13 @@ describe("DocumentStatusBadge", () => {
     expect(screen.getByTestId("document-status")).toHaveTextContent("Pending");
   });
 });
+
+const uploaded: UploadedDocument = {
+  id: "doc-1",
+  fileName: "sample.pdf",
+  size: 3,
+  mimeType: "application/pdf",
+};
 
 describe("ReplaceDocumentButton", () => {
   beforeEach(() => {
@@ -83,6 +90,7 @@ describe("DocumentUploadPanel", () => {
     vi.mocked(documentService.uploadDocument).mockImplementation(async (options) => {
       options.onProgress?.(50);
       options.onProgress?.(100);
+      return uploaded;
     });
     renderWithClient(<DocumentUploadPanel />);
     const file = new File(["pdf"], "sample.pdf", { type: "application/pdf" });
@@ -101,7 +109,7 @@ describe("DocumentUploadPanel", () => {
           options.signal?.addEventListener("abort", () => {
             reject(new ApiError("Upload cancelled", { code: "ABORTED" }));
           });
-          if (!options.signal) resolve();
+          if (!options.signal) resolve(uploaded);
         }),
     );
 
@@ -114,7 +122,7 @@ describe("DocumentUploadPanel", () => {
     fireEvent.click(screen.getByRole("button", { name: "Cancel upload" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("Upload cancelled");
 
-    vi.mocked(documentService.uploadDocument).mockResolvedValue();
+    vi.mocked(documentService.uploadDocument).mockResolvedValue(uploaded);
     fireEvent.click(screen.getByRole("button", { name: "Retry upload" }));
     await waitFor(() => {
       expect(documentService.uploadDocument).toHaveBeenCalledTimes(2);
@@ -124,7 +132,7 @@ describe("DocumentUploadPanel", () => {
   it("offers retry after a failed upload", async () => {
     vi.mocked(documentService.uploadDocument)
       .mockRejectedValueOnce(new ApiError("Scanner rejected the file", { status: 422 }))
-      .mockResolvedValueOnce();
+      .mockResolvedValueOnce(uploaded);
 
     renderWithClient(<DocumentUploadPanel />);
     const file = new File(["pdf"], "sample.pdf", { type: "application/pdf" });
