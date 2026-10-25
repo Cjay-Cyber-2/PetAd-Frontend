@@ -1,39 +1,26 @@
 import type { HTMLAttributes, ReactNode } from "react";
-import {
-  AlertTriangle,
-  CheckCircle2,
-  Clock3,
-  Info,
-  MinusCircle,
-  ShieldAlert,
-} from "lucide-react";
+import type { StatusColorToken, StatusMeta } from "../../lib/statusConfig";
 
-export type StatusBadgeColor =
-  | "gray"
-  | "blue"
-  | "teal"
-  | "green"
-  | "amber"
-  | "red";
-
-const STATUS_ICONS: Record<StatusBadgeColor, ReactNode> = {
-  gray: <MinusCircle aria-hidden="true" className="h-3.5 w-3.5" />,
-  blue: <Info aria-hidden="true" className="h-3.5 w-3.5" />,
-  teal: <Clock3 aria-hidden="true" className="h-3.5 w-3.5" />,
-  green: <CheckCircle2 aria-hidden="true" className="h-3.5 w-3.5" />,
-  amber: <AlertTriangle aria-hidden="true" className="h-3.5 w-3.5" />,
-  red: <ShieldAlert aria-hidden="true" className="h-3.5 w-3.5" />,
-};
+export type StatusBadgeColor = StatusColorToken;
 
 type StatusBadgeSpanProps = Omit<HTMLAttributes<HTMLSpanElement>, "color">;
 
-interface StatusBadgeProps extends StatusBadgeSpanProps {
-  color: StatusBadgeColor;
-  label: string;
+interface StatusBadgeBaseProps extends StatusBadgeSpanProps {
   tooltip?: string;
   pulse?: boolean;
   icon?: ReactNode;
 }
+
+/**
+ * A badge can either be driven by a config entry (`meta`) or by explicit
+ * `color`/`label` props. The union keeps both variants type-safe: passing a
+ * `meta` without a `label` is a compile error, and so is the other way round.
+ */
+type StatusBadgeProps = StatusBadgeBaseProps &
+  (
+    | { meta: StatusMeta; color?: never; label?: never }
+    | { meta?: never; color: StatusBadgeColor; label: string }
+  );
 
 export function StatusBadge({
   color,
@@ -41,13 +28,21 @@ export function StatusBadge({
   tooltip,
   pulse = false,
   icon,
+  meta,
   className,
   ...spanProps
 }: StatusBadgeProps) {
+  const Icon = meta?.icon;
+  const resolvedColor = meta ? meta.color : (color as StatusBadgeColor);
+  const resolvedLabel = meta ? meta.label : (label as string);
+  const resolvedTooltip = meta ? meta.description : tooltip;
+  const resolvedPulse = meta ? (meta.pulse ?? false) : pulse;
+  const resolvedIcon = icon ?? (Icon ? <Icon className="h-3.5 w-3.5" aria-hidden="true" /> : null);
+
   const badgeClassName = [
     "status-badge",
-    `status-badge--${color}`,
-    pulse ? "status-badge--pulse" : "",
+    `status-badge--${resolvedColor}`,
+    resolvedPulse ? "status-badge--pulse" : "",
     className,
   ]
     .filter(Boolean)
@@ -55,14 +50,12 @@ export function StatusBadge({
 
   const badge = (
     <span className={badgeClassName} {...spanProps}>
-      <span className="status-badge__icon" data-testid="status-badge-icon">
-        {icon ?? STATUS_ICONS[color]}
-      </span>
-      <span>{label}</span>
+      {resolvedIcon ? <span className="status-badge__icon">{resolvedIcon}</span> : null}
+      <span>{resolvedLabel}</span>
     </span>
   );
 
-  if (!tooltip) {
+  if (!resolvedTooltip) {
     return badge;
   }
 
@@ -70,7 +63,7 @@ export function StatusBadge({
     <div className="group relative inline-flex">
       {badge}
       <div className="status-badge__tooltip-wrapper">
-        <div className="status-badge__tooltip">{tooltip}</div>
+        <div className="status-badge__tooltip">{resolvedTooltip}</div>
       </div>
     </div>
   );
