@@ -10,7 +10,11 @@ test.describe("Analytics gating", () => {
   test("makes no analytics network calls when the flag is off", async ({ page }) => {
     const analyticsRequests: string[] = [];
     page.on("request", (request) => {
-      if (/analytics|\/events\b|\/errors\b/i.test(new URL(request.url()).pathname)) {
+      const { pathname } = new URL(request.url());
+      // The dev server serves source modules (e.g. /src/lib/analytics.ts); those
+      // are not analytics calls. Delivery is a POST/beacon to <endpoint>/events|errors.
+      const isModule = /^\/(src|node_modules|@vite|@id|@fs)\//.test(pathname);
+      if (!isModule && /analytics|\/events$|\/errors$/i.test(pathname)) {
         analyticsRequests.push(request.url());
       }
     });
