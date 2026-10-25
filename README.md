@@ -34,6 +34,7 @@ Note: Includes REST fallback and backfill paths for notifications via `notificat
 - **📄 Document Management** - Secure upload and verification of required documents
 - **🔔 Real-time Updates** - Live status notifications for adoption and custody requests (close #C9)
 - **⚖️ Dispute Management** - Comprehensive tracking and resolution pathways for administrative and user disputes
+- **💬 In-app Messaging** - Conversations with optimistic send, attachments, infinite-scroll history and live delivery ([guide](docs/features/messaging.md))
 
 ***
 
