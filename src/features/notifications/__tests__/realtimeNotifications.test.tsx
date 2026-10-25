@@ -139,7 +139,7 @@ describe("real-time notifications via the MSW socket mock", () => {
     });
     await userEvent.setup().click(trigger);
 
-    expect(await screen.findByTestId("notification-dropdown", {}, { timeout: 10_000 })).toBeInTheDocument();
+    expect(await screen.findByTestId("notification-dropdown")).toBeInTheDocument();
     expect(await badgeCount()).toBe(count);
   });
 
