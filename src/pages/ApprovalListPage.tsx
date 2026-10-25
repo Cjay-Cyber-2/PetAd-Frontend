@@ -1,24 +1,43 @@
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { RefreshCw } from "lucide-react";
 import { useApprovalList } from "../features/approval/hooks/useApprovalList";
+import {
+  ApprovalPagination,
+  APPROVAL_PAGE_SIZE,
+} from "../features/approval/components/ApprovalPagination";
 import { Skeleton } from "../components/ui/Skeleton";
 import { EmptyState } from "../components/ui/emptyState";
+import {
+  getStatusMeta,
+  STATUS_COLOR_CLASSES,
+} from "../lib/statusConfig";
 
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
-/** Number of skeleton cards rendered during loading — matches the default
- *  page size so the layout does not visually jump when real data arrives. */
+/** Approval list rows fetched per page. Fixed until Figma specifies a selector. */
+const PAGE_SIZE = APPROVAL_PAGE_SIZE;
+
+/** Number of skeleton cards rendered during loading. Sized like an approval
+ *  card so the layout does not visually jump when real data arrives. */
 const SKELETON_COUNT = 6;
+
+/** Reads a 1-based page number from the query string, defaulting to page 1. */
+function parsePageParam(value: string | null): number {
+  if (!value) return 1;
+
+  const page = Number(value);
+  return Number.isInteger(page) && page > 0 ? page : 1;
+}
 
 type FilterTab = "all" | "PENDING" | "APPROVED" | "REJECTED";
 
 const FILTER_TABS: { value: FilterTab; label: string }[] = [
   { value: "all", label: "All" },
-  { value: "PENDING", label: "Pending" },
-  { value: "APPROVED", label: "Approved" },
-  { value: "REJECTED", label: "Rejected" },
+  { value: "PENDING", label: getStatusMeta("approval", "PENDING").label },
+  { value: "APPROVED", label: getStatusMeta("approval", "APPROVED").label },
+  { value: "REJECTED", label: getStatusMeta("approval", "REJECTED").label },
 ];
 
 /** Distinct empty-state copy for each filter tab. */
@@ -101,9 +120,26 @@ function ApprovalErrorState({ onRetry }: { onRetry: () => void }) {
 
 // ─── Status label helper ─────────────────────────────────────────────────────
 
-function statusLabel(status: string | undefined): string {
-  if (!status) return "—";
-  return status.charAt(0) + status.slice(1).toLowerCase();
+/**
+ * Approval status pill.
+ *
+ * Label, colour and icon come from the shared status config so the approval
+ * list matches every other approval badge in the app.
+ */
+function ApprovalStatusPill({ status }: { status: string }) {
+  const meta = getStatusMeta("approval", status);
+  const tokenClasses = STATUS_COLOR_CLASSES[meta.color];
+
+  return (
+    <span
+      className={[
+        "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider",
+        `${tokenClasses.softBg} ${tokenClasses.text}`,
+      ].join(" ")}
+    >
+      {meta.label}
+    </span>
+  );
 }
 
 // ─── Main component ──────────────────────────────────────────────────────────
@@ -120,6 +156,7 @@ function statusLabel(status: string | undefined): string {
 export default function ApprovalListPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = (searchParams.get("tab") as FilterTab) || "all";
+  const requestedPage = parsePageParam(searchParams.get("page"));
 
   const handleTabChange = useCallback(
     (tab: FilterTab) => {
@@ -130,6 +167,23 @@ export default function ApprovalListPage() {
         } else {
           next.set("tab", tab);
         }
+        // A new filter always starts from the first page.
+        next.delete("page");
+        return next;
+      });
+    },
+    [setSearchParams],
+  );
+
+  const handlePageChange = useCallback(
+    (page: number) => {
+      setSearchParams((prev) => {
+        const next = new URLSearchParams(prev);
+        if (page <= 1) {
+          next.delete("page");
+        } else {
+          next.set("page", String(page));
+        }
         return next;
       });
     },
@@ -139,13 +193,39 @@ export default function ApprovalListPage() {
   const params = useMemo(
     () => ({
       status: activeTab === "all" ? undefined : activeTab,
-      limit: SKELETON_COUNT,
+      page: requestedPage,
+      limit: PAGE_SIZE,
     }),
-    [activeTab],
+    [activeTab, requestedPage],
   );
 
-  const { data, isLoading, isError, error, refetch } = useApprovalList(params);
+  const { data, isLoading, isError, refetch } = useApprovalList(params);
   const items = useMemo(() => data?.items ?? [], [data]);
+  const total = data?.total ?? items.length;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+  // A `?page=` beyond the available data (e.g. a stale/bookmarked link) is
+  // clamped to the last valid page so the list never renders a dead end.
+  const isOutOfRange = data !== undefined && requestedPage > totalPages;
+
+  useEffect(() => {
+    if (!isOutOfRange) return;
+
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (totalPages <= 1) {
+          next.delete("page");
+        } else {
+          next.set("page", String(totalPages));
+        }
+        return next;
+      },
+      { replace: true },
+    );
+  }, [isOutOfRange, totalPages, setSearchParams]);
+
+  const showSkeletons = isLoading || isOutOfRange;
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-12">
@@ -187,9 +267,9 @@ export default function ApprovalListPage() {
         </div>
 
         {/* Content */}
-        <div id="approval-status-panel" role="tabpanel" tabIndex={0} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          {isLoading ? (
-            /* ── Loading state: skeleton cards matching ApprovalCard dimensions ── */
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          {showSkeletons ? (
+            /* ── Loading state: skeleton cards matching approval card dimensions ── */
             <div
               data-testid="approval-loading"
               className="flex flex-col divide-y divide-gray-50"
@@ -239,28 +319,26 @@ export default function ApprovalListPage() {
                         ? new Date(item.submittedAt).toLocaleDateString()
                         : "—"}
                     </span>
-                    <span
-                      className={[
-                        "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider",
-                        item.status === "APPROVED"
-                          ? "bg-green-50 text-green-700"
-                          : item.status === "REJECTED"
-                            ? "bg-red-50 text-red-700"
-                            : "bg-amber-50 text-amber-700",
-                      ].join(" ")}
-                    >
-                      {statusLabel(item.status)}
-                    </span>
+                    {item.status ? (
+                      <ApprovalStatusPill status={item.status} />
+                    ) : null}
                   </div>
                 </div>
               ))}
             </div>
           )}
-
-          {/* Suppress TypeScript unused-variable warning for `error` — it is
-              available for richer error display in the future. */}
-          {error ? null : null}
         </div>
+
+        {/* Pagination — hidden while loading/erroring and when only one page exists. */}
+        {!showSkeletons && !isError && (
+          <ApprovalPagination
+            page={requestedPage}
+            total={total}
+            pageSize={PAGE_SIZE}
+            onPageChange={handlePageChange}
+            className="mt-6"
+          />
+        )}
       </div>
     </div>
   );
