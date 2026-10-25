@@ -1,0 +1,153 @@
+name: PR Preview
+
+# Deploys every pull request to its own Vercel preview URL, posts (and keeps
+# updating) one comment with that URL, and removes the deployment when the PR
+# is closed.
+#
+# Requires a GitHub Environment named `preview` — see docs/deploy.md.
+# Pull requests from forks are skipped: GitHub does not expose secrets to them.
+
+on:
+  pull_request:
+    branches: [ main ]
+    types: [opened, synchronize, reopened, closed]
+
+concurrency:
+  group: preview-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+env:
+  COMMENT_MARKER: '<!-- petad-pr-preview -->'
+
+jobs:
+  deploy:
+    name: Deploy preview
+    if: >-
+      github.event.action != 'closed' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    environment: preview
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel
+
+      - name: Build and deploy preview
+        id: deploy
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
+          VITE_API_URL: ${{ vars.VITE_API_URL }}
+          VITE_WEBSOCKET_URL: ${{ vars.VITE_WEBSOCKET_URL }}
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          vercel pull --yes --environment=preview --git-branch="$HEAD_REF" --token="$VERCEL_TOKEN"
+          # Previews always talk to the staging API. MSW stays off and analytics
+          # stay off: the production build refuses VITE_MSW=true (issue #526).
+          vercel build --token="$VERCEL_TOKEN" \
+            --build-env "VITE_API_URL=$VITE_API_URL" \
+            --build-env "VITE_WEBSOCKET_URL=$VITE_WEBSOCKET_URL" \
+            --build-env "VITE_ENABLE_ANALYTICS=false" \
+            --build-env "VITE_MSW=false"
+          url=$(vercel deploy --prebuilt --token="$VERCEL_TOKEN")
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+
+      - name: Comment the preview URL
+        uses: actions/github-script@v7
+        env:
+          PREVIEW_URL: ${{ steps.deploy.outputs.url }}
+        with:
+          script: |
+            const marker = process.env.COMMENT_MARKER;
+            const url = process.env.PREVIEW_URL;
+            const sha = context.payload.pull_request.head.sha.slice(0, 7);
+            const body = [
+              marker,
+              `<!-- preview-url:${url} -->`,
+              '### 🔍 Preview deployment',
+              '',
+              `**${url}**`,
+              '',
+              `Built from \`${sha}\` against the staging API (mock data is off). It updates on every push and is removed when this PR closes.`,
+            ].join('\n');
+
+            const { owner, repo } = context.repo;
+            const issue_number = context.issue.number;
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner, repo, issue_number,
+            });
+            const existing = comments.find((c) => c.body && c.body.includes(marker));
+
+            if (existing) {
+              await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body });
+            } else {
+              await github.rest.issues.createComment({ owner, repo, issue_number, body });
+            }
+
+  teardown:
+    name: Remove preview
+    if: >-
+      github.event.action == 'closed' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    environment: preview
+
+    steps:
+      - name: Find the preview URL
+        id: find
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const marker = process.env.COMMENT_MARKER;
+            const { owner, repo } = context.repo;
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner, repo, issue_number: context.issue.number,
+            });
+            const existing = comments.find((c) => c.body && c.body.includes(marker));
+            const match = existing && existing.body.match(/<!-- preview-url:(\S+) -->/);
+            core.setOutput('comment_id', existing ? String(existing.id) : '');
+            core.setOutput('url', match ? match[1] : '');
+
+      - name: Use Node.js
+        if: steps.find.outputs.url != ''
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+
+      - name: Remove the deployment
+        if: steps.find.outputs.url != ''
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
+          PREVIEW_URL: ${{ steps.find.outputs.url }}
+        run: |
+          npm install --global vercel
+          vercel remove "$PREVIEW_URL" --yes --token="$VERCEL_TOKEN"
+
+      - name: Mark the comment as removed
+        if: steps.find.outputs.comment_id != ''
+        uses: actions/github-script@v7
+        env:
+          COMMENT_ID: ${{ steps.find.outputs.comment_id }}
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            await github.rest.issues.updateComment({
+              owner, repo,
+              comment_id: Number(process.env.COMMENT_ID),
+              body: `${process.env.COMMENT_MARKER}\n### 🔍 Preview deployment\n\nThis PR is closed, so its preview deployment has been removed.`,
+            });

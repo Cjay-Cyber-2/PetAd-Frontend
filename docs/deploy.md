@@ -42,6 +42,34 @@ this workflow.
   output. A missing value should be fixed in the corresponding GitHub
   Environment; do not fall back to a production value in staging.
 
+## Pull request previews
+
+`preview.yml` deploys every pull request to its own Vercel preview, posts the
+URL in a single comment that is updated on each push, and removes the
+deployment when the PR is closed or merged.
+
+Create a GitHub Environment named `preview` (no reviewers, no branch
+restriction) with the same names as in the table above:
+
+| Name | Type | Value for previews |
+| --- | --- | --- |
+| `VERCEL_TOKEN` | Secret | Vercel deployment credential |
+| `VERCEL_ORG_ID` | Variable | Vercel team/account ID |
+| `VERCEL_PROJECT_ID` | Variable | Vercel project ID |
+| `VITE_API_URL` | Variable | **Staging** API base URL |
+| `VITE_WEBSOCKET_URL` | Variable | **Staging** `wss://` notification endpoint |
+
+Notes:
+
+- Previews always use the staging API. The mock service worker (MSW) is **off**:
+  it only runs in the dev server, and production builds deliberately refuse
+  `VITE_MSW=true` (see the production guard in the README). Analytics are off.
+- Pull requests from forks are skipped, because GitHub does not give workflows
+  secrets for them. Maintainers can push the branch to this repository to get a
+  preview.
+- If the Vercel Git integration is also installed on the repository it posts its
+  own preview too; disable it for this project if you only want one.
+
 ## Roll back
 
 1. Open the Vercel project and select **Deployments**.

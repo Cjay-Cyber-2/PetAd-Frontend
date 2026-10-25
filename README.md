@@ -266,8 +266,10 @@ type AdoptionFormData = z.infer<typeof adoptionFormSchema>;
 | `npm run dev` | Start development server (hot reload enabled) |
 | `npm run build` | Build optimized production bundle |
 | `npm run preview` | Preview production build locally |
+| `npm run type-check` | Type-check the whole project (`tsc -b`) |
 | `npm run lint` | Run ESLint checks |
 | `npm run test` | Run unit tests with Vitest |
+| `npm run test:coverage` | Run unit tests and write a coverage report to `coverage/` |
 | `npm run e2e` | Run Playwright end-to-end tests |
 | `npm run check:msw` | Fail if a production build resolves `VITE_MSW=true` |
 
@@ -386,18 +388,14 @@ The design includes:
 ---
 ## 🤝 Contributing
 
-Contributions are welcome! Please follow these steps:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+Contributions are welcome! Read **[CONTRIBUTING.md](CONTRIBUTING.md)** for branch and commit
+conventions, how to add a feature, the PR checklist and the release process. Use the issue
+templates to report bugs or propose features, and see [CHANGELOG.md](CHANGELOG.md) for what
+changed.
 
 **Before submitting:**
 
-- fix any issues
-- Ensure `npm run lint`, `npm run build` and `npm test` pass
+- Ensure `npm run type-check`, `npm run lint`, `npm test` and `npm run build` pass
 - Add tests for new features
 - Update documentation if needed
 
