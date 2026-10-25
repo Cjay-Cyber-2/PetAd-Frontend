@@ -1,4 +1,4 @@
-import { renderDocumentStatus } from "../../../lib/uploadRules";
+import { renderDocumentStatus } from "../../../lib/documentUploadRules";
 
 export function DocumentStatusBadge({ status }: { status?: string | null }) {
   const label = renderDocumentStatus(status);

@@ -1,5 +1,5 @@
 import { useState, useRef, type DragEvent, type KeyboardEvent, type ChangeEvent } from "react";
-import { UPLOAD_MAX_BYTES, validateUploadFiles } from "../../lib/uploadRules";
+import { UPLOAD_MAX_BYTES, validateUploadFiles } from "../../lib/documentUploadRules";
 
 const DEFAULT_ACCEPT = ".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png";
 

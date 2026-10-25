@@ -135,7 +135,10 @@ export const filesHandlers = [
 			expiresAt: null,
 		};
 		profileDocuments.unshift(created);
-		return HttpResponse.json(created, { status: 201 });
+		return HttpResponse.json(
+			{ ...created, message: "Document uploaded successfully" },
+			{ status: 201 },
+		);
 	}),
 
 	http.delete("/api/documents/:id", async ({ params }) => {

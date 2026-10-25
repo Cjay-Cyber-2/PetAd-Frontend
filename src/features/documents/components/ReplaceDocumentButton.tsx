@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { documentService } from "../../../api/documentService";
 import { ApiError } from "../../../lib/api-errors";
-import { validateUploadFiles } from "../../../lib/uploadRules";
+import { validateUploadFiles } from "../../../lib/documentUploadRules";
 
 interface ReplaceDocumentButtonProps {
   documentId: string;
