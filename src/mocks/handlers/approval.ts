@@ -168,13 +168,13 @@ export const approvalHandlers = [
 
 		if (status) {
 			filtered = filtered.filter(
-				(item) => item.status.toLowerCase() === status.toLowerCase()
+				(item) => (item.status ?? "").toLowerCase() === status.toLowerCase()
 			);
 		}
 
 		if (role) {
 			filtered = filtered.filter(
-				(item) => item.role.toLowerCase() === role.toLowerCase()
+				(item) => (item.role ?? "").toLowerCase() === role.toLowerCase()
 			);
 		}
 
@@ -182,8 +182,8 @@ export const approvalHandlers = [
 			const s = search.toLowerCase();
 			filtered = filtered.filter(
 				(item) =>
-					item.petName.toLowerCase().includes(s) ||
-					item.applicantName.toLowerCase().includes(s)
+					(item.petName ?? "").toLowerCase().includes(s) ||
+					(item.applicantName ?? "").toLowerCase().includes(s)
 			);
 		}
 

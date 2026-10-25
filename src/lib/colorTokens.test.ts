@@ -1,3 +1,4 @@
+/// <reference types="node" />
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
@@ -39,7 +40,7 @@ describe("colour tokens", () => {
   });
 
   it("uses the same hex values in src/index.css", () => {
-    const css = readFileSync(new URL("../index.css", import.meta.url), "utf8");
+    const css = readFileSync("src/index.css", "utf8");
     for (const pair of Object.values(statusColorTokens)) {
       expect(css).toContain(pair.background);
       expect(css).toContain(pair.text);
