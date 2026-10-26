@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { custodyService } from "../../api/custodyService";
 import { queryKeys } from "../queryKeys";
+import { STALE_TIME } from "../staleTime";
 
 export function useCustodyDetails(custodyId: string | undefined) {
   const enabled = Boolean(custodyId);
@@ -10,7 +11,7 @@ export function useCustodyDetails(custodyId: string | undefined) {
     queryFn: () => custodyService.getDetails(custodyId!),
     enabled,
     // Custody history is immutable after recording, so the shared cache is sufficient.
-    staleTime: 30_000,
+    staleTime: STALE_TIME.TIMELINES,
   });
 
   return {

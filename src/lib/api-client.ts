@@ -1,5 +1,6 @@
 import type { ApiClientConfig } from "../types/auth";
 import { ApiError, NetworkError, ValidationApiError } from "./api-errors";
+import { logger } from "./logger";
 import { queryClient } from "./query-client";
 import { markSessionUnauthenticated, redirectToLogin } from "./session";
 class ApiClient {
@@ -222,7 +223,7 @@ if (response.status === 422) {
 	}
 
 	setTokenStorage(storage: "localStorage" | "sessionStorage" | "cookie") {
-		console.log(`Token storage set to ${storage}`);
+		logger.debug(`Token storage set to ${storage}`);
 	}
 }
 

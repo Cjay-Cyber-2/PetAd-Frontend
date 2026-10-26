@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "../api-client";
 import { usePolling } from "./usePolling";
 import { queryKeys } from "../queryKeys";
+import { logger } from "../logger";
 
 interface NotificationCountResponse {
   count: number;
@@ -34,7 +35,7 @@ export function useNotificationCount() {
           count: 0,
         });
       } catch (error) {
-        console.warn("Failed to mark notifications read", error);
+        logger.warn("Failed to mark notifications read", error);
       }
     };
 

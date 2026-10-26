@@ -1,9 +1,10 @@
 import { QueryClient, QueryCache } from "@tanstack/react-query";
+import { logger } from "./logger";
 
 type QueryErrorToast = (message: string) => void;
 
 let queryErrorToast: QueryErrorToast = (message) => {
-	console.warn("[Toast]", message);
+	logger.warn("[Toast]", message);
 };
 
 /** Register the app toast used for unexpected query and mutation failures. */
@@ -11,7 +12,7 @@ export function registerQueryErrorToast(handler: QueryErrorToast): () => void {
 	queryErrorToast = handler;
 	return () => {
 		queryErrorToast = (message) => {
-			console.warn("[Toast]", message);
+			logger.warn("[Toast]", message);
 		};
 	};
 }
@@ -42,7 +43,7 @@ export function retryQuery(failureCount: number, error: unknown): boolean {
 function logApiError(error: unknown): void {
 	const errorMessage =
 		error instanceof Error ? error.message : "An unknown error occurred";
-	console.error("[API Error]", errorMessage);
+	logger.error("[API Error]", errorMessage);
 }
 
 function showToastForUnexpectedErrors(error: unknown): void {
