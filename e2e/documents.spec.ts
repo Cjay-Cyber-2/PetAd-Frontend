@@ -9,7 +9,7 @@ test("uploads a fixture and lists it as Pending", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Documents" })).toBeVisible();
 
   await page.setInputFiles("#document-file", fixture);
-  await page.getByRole("button", { name: "Upload" }).click();
+  await page.getByRole("button", { name: "Upload", exact: true }).click();
 
   const uploaded = page.getByRole("listitem").filter({ hasText: "sample.pdf" });
   await expect(uploaded).toBeVisible();
