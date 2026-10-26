@@ -39,15 +39,14 @@ class MockXHR {
 }
 
 describe("documentService.upload", () => {
-  const originalXhr = globalThis.XMLHttpRequest;
 
   afterEach(() => {
-    globalThis.XMLHttpRequest = originalXhr;
+    vi.unstubAllGlobals();
     vi.restoreAllMocks();
   });
 
   it("reports progress from 0 through 100", async () => {
-    globalThis.XMLHttpRequest = MockXHR as unknown as typeof XMLHttpRequest;
+    vi.stubGlobal("XMLHttpRequest", MockXHR);
     const progress: number[] = [];
     const file = new File(["hello"], "shot.png", { type: "image/png" });
 

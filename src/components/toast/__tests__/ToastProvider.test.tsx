@@ -1,5 +1,4 @@
-import { act, render } from "@testing-library/react";
-import { fireEvent, screen } from "@testing-library/dom";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ToastProvider, toast } from "../ToastProvider";
 import { useToast } from "../useToast";
