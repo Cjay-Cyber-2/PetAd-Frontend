@@ -1,5 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-import type { QueryKey, UseQueryOptions } from "@tanstack/react-query";
+import type {
+  QueryKey,
+  UseQueryOptions,
+  UseQueryResult,
+} from "@tanstack/react-query";
 import type { ApiError } from "../types/auth";
 import { redirectToLogin } from "../lib/session";
 
@@ -10,6 +14,8 @@ interface UseApiQueryReturn<T> {
   isForbidden: boolean;
   isNotFound: boolean;
   error: ApiError | null;
+  /** Re-run the query — used by error/retry affordances. */
+  refetch: UseQueryResult<T, ApiError>["refetch"];
 }
 
 /**
@@ -24,7 +30,7 @@ export function useApiQuery<T>(
   fetchFn: () => Promise<T>,
   options?: Omit<UseQueryOptions<T, ApiError>, 'queryKey' | 'queryFn'>
 ): UseApiQueryReturn<T> {
-  const { data, isLoading, isError, error } = useQuery<T, ApiError>({
+  const { data, isLoading, isError, error, refetch } = useQuery<T, ApiError>({
     queryKey: key,
     queryFn: fetchFn,
     ...options,
@@ -44,5 +50,6 @@ export function useApiQuery<T>(
     isForbidden: status === 403,
     isNotFound: status === 404,
     error: error || null,
+    refetch,
   };
 }

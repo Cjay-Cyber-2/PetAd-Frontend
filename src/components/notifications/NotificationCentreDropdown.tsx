@@ -13,8 +13,10 @@ import { NotificationItem } from "./index";
 import { useMutateMarkRead } from "../../hooks/useMutateMarkRead";
 import { useMutateMarkAllRead } from "../../hooks/useMutateMarkAllRead";
 import { notificationRouter } from "../../lib/notificationRouter";
+import { useNotificationSocket } from "../../context/NotificationSocketContext";
 import type { Notification, NotificationsPage } from "../../types/notifications";
 import { queryKeys } from "../../lib/queryKeys";
+import { useDialogFocus } from "../../hooks/useDialogFocus";
 
 
 const DROPDOWN_LIMIT = 20;
@@ -47,17 +49,21 @@ function DropdownSkeleton() {
 
 export interface NotificationCentreDropdownProps {
   hasUnread?: boolean;
+  /** Open the panel immediately when the deferred component is first mounted. */
+  initialOpen?: boolean;
 }
 
 
 export function NotificationCentreDropdown({
   hasUnread = false,
+  initialOpen = false,
 }: NotificationCentreDropdownProps) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(initialOpen);
   const [focusedIndex, setFocusedIndex] = useState(-1);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
   const navigate = useNavigate();
@@ -65,12 +71,14 @@ export function NotificationCentreDropdown({
 
   const { markRead, isPending: isMarkingRead } = useMutateMarkRead();
   const { markAllRead, isPending: isMarkingAll } = useMutateMarkAllRead();
+  const { connectionState, reconnect } = useNotificationSocket();
 
 
   const { data, isLoading, isError } = useQuery<NotificationsPage>({
     queryKey: queryKeys.notifications.dropdown(),
     queryFn: fetchDropdownNotifications,
     enabled: isOpen,
+    // Notifications may arrive while the menu is open, so use a short freshness window.
     staleTime: 30_000,
   });
 
@@ -90,6 +98,8 @@ export function NotificationCentreDropdown({
     triggerRef.current?.focus();
   }, []);
 
+  useDialogFocus(isOpen, dialogRef, close);
+
   const toggle = useCallback(() => {
     if (isOpen) close();
     else open();
@@ -107,21 +117,6 @@ export function NotificationCentreDropdown({
 
     document.addEventListener("mousedown", handleMouseDown);
     return () => document.removeEventListener("mousedown", handleMouseDown);
-  }, [isOpen, close]);
-
-
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        e.stopPropagation();
-        close();
-      }
-    };
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, close]);
 
 
@@ -195,10 +190,12 @@ export function NotificationCentreDropdown({
       {/* Dropdown panel */}
       {isOpen && (
         <div
+          ref={dialogRef}
           id={dialogId}
           role="dialog"
           aria-label="Notifications"
           aria-modal="true"
+          tabIndex={-1}
           data-testid="notification-dropdown"
           className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-xl border border-gray-100 z-[60] overflow-hidden"
         >
@@ -227,6 +224,39 @@ export function NotificationCentreDropdown({
               </button>
             )}
           </div>
+
+          {/* Connection state banner */}
+          {connectionState !== "connected" && (
+            <div
+              data-testid="connection-banner"
+              className={`px-4 py-2 text-xs font-medium flex items-center justify-between ${
+                connectionState === "reconnecting"
+                  ? "bg-amber-50 text-amber-700 border-b border-amber-100"
+                  : "bg-red-50 text-red-700 border-b border-red-100"
+              }`}
+            >
+              <span className="flex items-center gap-1.5">
+                <span
+                  className={`w-1.5 h-1.5 rounded-full ${
+                    connectionState === "reconnecting" ? "bg-amber-500 animate-pulse" : "bg-red-500"
+                  }`}
+                />
+                {connectionState === "reconnecting"
+                  ? "Reconnecting... notifications may be delayed"
+                  : "Disconnected — notifications paused"}
+              </span>
+              {connectionState === "disconnected" && (
+                <button
+                  type="button"
+                  data-testid="reconnect-button"
+                  onClick={reconnect}
+                  className="text-red-600 hover:text-red-800 underline font-semibold"
+                >
+                  Reconnect
+                </button>
+              )}
+            </div>
+          )}
 
           {/* Body */}
           <div

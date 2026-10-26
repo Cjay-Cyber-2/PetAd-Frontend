@@ -4,6 +4,7 @@ import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { authService } from "../../api/authService";
 import { ApiError } from "../../lib/api-errors";
 import { clearUnauthenticatedSession } from "../../lib/session";
+import { CURRENT_USER_STORAGE_KEY } from "../../hooks/useCurrentUser";
 
 interface SignInFormData {
     email: string;
@@ -78,6 +79,12 @@ export function SignInForm() {
             });
             localStorage.setItem("auth_token", response.token);
             clearUnauthenticatedSession();
+            // Persist the profile so forms (e.g. the adoption applicant step)
+            // can prefill the signed-in user's details.
+            localStorage.setItem(
+                CURRENT_USER_STORAGE_KEY,
+                JSON.stringify(response.user),
+            );
 
             const returnTo = getReturnTo(searchParams);
             sessionStorage.removeItem("petad_return_to");

@@ -12,6 +12,7 @@ interface Props {
 
 const MIN_LEN = 30;
 const MAX_FILES = 5;
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 
 export function RaiseDisputeModal({ isOpen, onClose, adoptionId, raisedBy }: Props) {
   const [reason, setReason] = useState("");
@@ -62,6 +63,15 @@ export function RaiseDisputeModal({ isOpen, onClose, adoptionId, raisedBy }: Pro
       return;
     }
 
+    // Defense-in-depth: reject oversized files at submit time even if validation was bypassed
+    const oversized = files.find((f) => f.size > MAX_FILE_SIZE);
+    if (oversized) {
+      setInlineError(
+        `File too large — "${oversized.name}" exceeds the 10 MB limit.`,
+      );
+      return;
+    }
+
     try {
       await mutateAsync({ adoptionId, raisedBy, reason, files });
       toast.success("Dispute raised. Escrow paused.");
@@ -98,8 +108,9 @@ export function RaiseDisputeModal({ isOpen, onClose, adoptionId, raisedBy }: Pro
         </p>
 
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Reason</label>
+          <label htmlFor="raise-dispute-reason" className="block text-sm font-medium text-gray-700 mb-1">Reason</label>
           <textarea
+            id="raise-dispute-reason"
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             rows={5}
@@ -121,6 +132,7 @@ export function RaiseDisputeModal({ isOpen, onClose, adoptionId, raisedBy }: Pro
             onChange={updateFiles}
             selectedFiles={files}
             maxFiles={MAX_FILES}
+            maxFileSize={MAX_FILE_SIZE}
           />
           {files.length > 0 && (
             <div className="mt-3 space-y-2">
