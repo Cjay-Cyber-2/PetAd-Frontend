@@ -55,34 +55,40 @@ async function bootstrap() {
   // No-op unless VITE_ENABLE_ANALYTICS === 'true'.
   initAnalytics()
 
-  const reloadingAfterCleanup = await cleanupServiceWorkers()
+  if (import.meta.env.DEV) {
+    const reloadingAfterCleanup = await cleanupServiceWorkers()
 
-  if (reloadingAfterCleanup) {
-    return
-  }
-
-  if (import.meta.env.DEV && import.meta.env.VITE_MSW === 'true') {
-    // Some browsers (Firefox in particular) report no `serviceWorker.controller`
-    // even while the MSW worker is active. MSW treats that combination as a
-    // "first load" and calls location.reload(), producing an endless reload
-    // loop. Dropping the stale registration lets MSW register cleanly instead.
-    if (navigator.serviceWorker.controller == null) {
-      const staleRegistrations = await navigator.serviceWorker.getRegistrations()
-
-      if (staleRegistrations.length > 0) {
-        await Promise.all(
-          staleRegistrations.map((registration) => registration.unregister()),
-        )
-      }
+    if (reloadingAfterCleanup) {
+      return
     }
 
-    const { worker } = await import('./mocks/browser')
-    await worker.start({
-      onUnhandledRequest: 'warn',
-      serviceWorker: {
-        url: '/mockServiceWorker.js',
-      },
-    })
+    if (import.meta.env.VITE_MSW === 'true') {
+      // Some browsers (Firefox in particular) report no `serviceWorker.controller`
+      // even while the MSW worker is active. MSW treats that combination as a
+      // "first load" and calls location.reload(), producing an endless reload
+      // loop. Dropping the stale registration lets MSW register cleanly instead.
+      if (navigator.serviceWorker.controller == null) {
+        const staleRegistrations = await navigator.serviceWorker.getRegistrations()
+
+        if (staleRegistrations.length > 0) {
+          await Promise.all(
+            staleRegistrations.map((registration) => registration.unregister()),
+          )
+        }
+      }
+
+      const { worker } = await import('./mocks/browser')
+      await worker.start({
+        onUnhandledRequest: 'warn',
+        serviceWorker: {
+          url: '/mockServiceWorker.js',
+        },
+      })
+    }
+  } else {
+    // A stale development worker must still be removed, but it should not
+    // delay the first production paint.
+    void cleanupServiceWorkers()
   }
 
   createRoot(document.getElementById('root')!).render(

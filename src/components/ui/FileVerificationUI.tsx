@@ -5,6 +5,7 @@ import { DocumentRow } from './DocumentRow';
 import { EmptyState } from './emptyState';
 import { Skeleton } from './Skeleton';
 import type { UserRole } from '../../types/auth';
+import { STALE_TIME } from '../../lib/staleTime';
 import { logger } from "../../lib/logger";
 
 interface FileVerificationUIProps {
@@ -26,7 +27,9 @@ export function FileVerificationUI({
 }: FileVerificationUIProps) {
   const { data: documents, isLoading } = useApiQuery(
     ['documents', adoptionId || disputeId],
-    () => documentService.getDocuments(adoptionId, disputeId)
+    () => documentService.getDocuments(adoptionId, disputeId),
+    // Admins review documents out-of-band, so refetch whenever the tab regains focus.
+    { staleTime: STALE_TIME.DOCUMENTS, refetchOnWindowFocus: true },
   );
 
   const canAdd = isOwner || currentUserRole === 'ADMIN';

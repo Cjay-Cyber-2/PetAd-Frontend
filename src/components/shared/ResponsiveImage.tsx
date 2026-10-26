@@ -68,7 +68,7 @@ export function ResponsiveImage({
       height={height}
       loading={priority ? "eager" : "lazy"}
       decoding={priority ? "sync" : "async"}
-      fetchPriority={priority ? "high" : "auto"}
+      fetchPriority={priority ? "high" : "low"}
       data-loaded={loaded ? "true" : "false"}
       className={`${className} transition-opacity duration-300 ${loaded ? "opacity-100" : "opacity-0"}`.trim()}
       // Solid placeholder painted behind the image while it loads.
