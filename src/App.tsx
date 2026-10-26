@@ -6,10 +6,10 @@ import { GuestRoute } from "./components/auth/GuestRoute";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { PublicRoute } from "./components/auth/PublicRoute";
 import { AuthGateProvider } from "./context/AuthGateContext";
+import ListingsPage from "./pages/ListingsPage";
 
 const FavouritePage = lazy(() => import("./pages/FavouritePage"));
 const HomePage = lazy(() => import("./pages/HomePage"));
-const ListingsPage = lazy(() => import("./pages/ListingsPage"));
 const LoginPage = lazy(() => import("./pages/LoginPage"));
 const ProfilePage = lazy(() => import("./pages/ProfilePage"));
 const RegisterPage = lazy(() => import("./pages/RegisterPage"));
@@ -46,6 +46,9 @@ const DisputeDetailPage = lazy(() => import("./pages/DisputeDetailPage"));
 const ShelterApprovalQueuePage = lazy(() => import("./pages/ShelterApprovalQueuePage"));
 const MyDisputesPage = lazy(() => import("./pages/MyDisputesPage"));
 const DocumentsPage = lazy(() => import("./pages/DocumentsPage"));
+const DocumentVerificationPage = lazy(() => import("./pages/admin/DocumentVerificationPage"));
+const UsersPage = lazy(() => import("./pages/admin/UsersPage"));
+const AuditLogPage = lazy(() => import("./pages/admin/AuditLogPage"));
 const CaretakerDashboardPage = lazy(() => import("./pages/CaretakerDashboardPage"));
 
 function RouteLoadingFallback() {
@@ -126,6 +129,9 @@ function App() {
             />
             <Route path="/admin/approvals" element={<AdminApprovalQueuePage />} />
             <Route path="/admin/disputes" element={<AdminDisputeListPage />} />
+            <Route path="/admin/documents" element={<DocumentVerificationPage />} />
+            <Route path="/admin/users" element={<UsersPage />} />
+            <Route path="/admin/audit-log" element={<AuditLogPage />} />
             <Route
               path="/shelter/approvals"
               element={<ShelterApprovalQueuePage />}
