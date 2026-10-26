@@ -6,6 +6,7 @@ import { Skeleton } from "../ui/Skeleton";
 import { EmptyState } from "../ui/emptyState";
 import { StatusBadge } from "../common/StatusBadge";
 import type { ApprovalDecision } from "../../types/adoption";
+import { STALE_TIME } from "../../lib/staleTime";
 
 interface ApprovalHistoryTabProps {
   adoptionId: string;
@@ -14,7 +15,9 @@ interface ApprovalHistoryTabProps {
 export default function ApprovalHistoryTab({ adoptionId }: ApprovalHistoryTabProps) {
   const { data: approvals, isLoading, isError } = useApiQuery<ApprovalDecision[]>(
     ["approvals", adoptionId],
-    () => adoptionService.getApprovals(adoptionId)
+    () => adoptionService.getApprovals(adoptionId),
+    // Approval history is operator-driven; a one-minute cache matches the approvals domain.
+    { staleTime: STALE_TIME.APPROVALS },
   );
 
   if (isLoading) {
