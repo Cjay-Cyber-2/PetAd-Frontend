@@ -1,6 +1,7 @@
 import mockOwnerImg from "../../assets/mockownder.png";
 import { Heart } from 'lucide-react';
 import { prefetchPetDetail } from '../../lib/prefetchPet';
+import { ResponsiveImage } from '../shared/ResponsiveImage';
 
 export interface Pet {
     id: string;
@@ -19,9 +20,11 @@ interface PetCardProps {
     onToggleFavourite: (id: string) => void;
     onToggleInterested: (id: string) => void;
     onOwnerClick?: () => void;
+    /** Load the pet image eagerly (first card in a grid / LCP candidate). */
+    priority?: boolean;
 }
 
-export function PetCard({ pet, onToggleFavourite, onToggleInterested, onOwnerClick }: PetCardProps) {
+export function PetCard({ pet, onToggleFavourite, onToggleInterested, onOwnerClick, priority = false }: PetCardProps) {
 
     return (
         <div
@@ -31,10 +34,13 @@ export function PetCard({ pet, onToggleFavourite, onToggleInterested, onOwnerCli
         >
             {/* Image container with aspect ratio */}
             <div className="relative w-full pb-[85%] h-[260px] bg-gray-100 overflow-hidden group">
-                <img
+                <ResponsiveImage
                     src={pet.imageUrl}
                     alt={pet.name}
-                    loading="lazy"
+                    width={400}
+                    height={340}
+                    sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
+                    priority={priority}
                     className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
 
@@ -73,7 +79,7 @@ export function PetCard({ pet, onToggleFavourite, onToggleInterested, onOwnerCli
                         className="w-10 h-10 rounded-full bg-white p-[0.5px] shadow-sm hover:scale-110 transition-transform focus:outline-none focus:ring-2 focus:ring-[#0D1B2A]/50"
                         aria-label="View Pet Owner Information"
                     >
-                        <img src={mockOwnerImg} alt="Lister" loading="lazy" className="w-full h-full rounded-full object-cover" />
+                        <ResponsiveImage src={mockOwnerImg} alt="Lister" width={40} height={40} className="w-full h-full rounded-full object-cover" />
                     </button>
                 </div>
 

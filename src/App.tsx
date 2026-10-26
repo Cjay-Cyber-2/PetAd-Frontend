@@ -6,10 +6,10 @@ import { GuestRoute } from "./components/auth/GuestRoute";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { PublicRoute } from "./components/auth/PublicRoute";
 import { AuthGateProvider } from "./context/AuthGateContext";
+import ListingsPage from "./pages/ListingsPage";
 
 const FavouritePage = lazy(() => import("./pages/FavouritePage"));
 const HomePage = lazy(() => import("./pages/HomePage"));
-const ListingsPage = lazy(() => import("./pages/ListingsPage"));
 const LoginPage = lazy(() => import("./pages/LoginPage"));
 const ProfilePage = lazy(() => import("./pages/ProfilePage"));
 const RegisterPage = lazy(() => import("./pages/RegisterPage"));
