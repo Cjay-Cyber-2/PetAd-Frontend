@@ -7,7 +7,6 @@ import { describe, it, expect, vi } from "vitest";
 import React from "react";
 import type { AdoptionDetails } from "../../types/adoption";
 import { queryKeys } from "../../lib/queryKeys";
-import { queryKeys } from "../../lib/queryKeys";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 

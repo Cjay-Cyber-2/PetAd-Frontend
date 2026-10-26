@@ -5,7 +5,6 @@ import React from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook as baseRenderHook, type RenderHookOptions, act } from "@testing-library/react";
 import { queryKeys } from "../../lib/queryKeys";
-import { queryKeys } from "../../lib/queryKeys";
 
 interface WrapperWithClient {
   ({ children }: { children: React.ReactNode }): React.ReactElement;

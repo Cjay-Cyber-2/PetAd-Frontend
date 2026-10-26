@@ -2,7 +2,6 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { getApiClient } from "../lib/api-client";
 import type { NotificationPreferences } from "../types/notifications";
 import { queryKeys } from "../lib/queryKeys";
-import { queryKeys } from "../lib/queryKeys";
 
 export const useMutateUpdatePreferences = () => {
   const queryClient = useQueryClient();

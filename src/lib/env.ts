@@ -35,7 +35,7 @@ const optionalUrl = z
 
 const envSchema = z.object({
 	VITE_API_URL: z
-		.string({ required_error: "is required", invalid_type_error: "is required" })
+		.string({ error: "is required" })
 		.min(1, "is required")
 		.url("must be a valid URL"),
 	VITE_MSW: booleanString,

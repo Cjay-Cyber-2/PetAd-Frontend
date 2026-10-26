@@ -21,6 +21,7 @@ export const queryKeys = {
 	adoptions: {
 		list: () => ["adoptions"] as const,
 		detail: (id: string) => ["adoption", id] as const,
+		status: (id: string) => ["adoption", id, "status"] as const,
 		timeline: (id: string) => ["adoption", id, "timeline"] as const,
 	},
 	notifications: {

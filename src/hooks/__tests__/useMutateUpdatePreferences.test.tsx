@@ -6,7 +6,6 @@ import { getApiClient } from "../../lib/api-client";
 import { useMutateUpdatePreferences } from "../useMutateUpdatePreferences";
 import type { NotificationPreferences } from "../../types/notifications";
 import { queryKeys } from "../../lib/queryKeys";
-import { queryKeys } from "../../lib/queryKeys";
 
 vi.mock("../../lib/api-client", () => ({
   getApiClient: vi.fn(),
