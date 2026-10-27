@@ -1,5 +1,5 @@
 import { useApiMutation } from "./useApiMutation";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, type QueryKey } from "@tanstack/react-query";
 import { UNREAD_NOTIFICATION_COUNT_QUERY_KEY } from "../features/notifications/hooks/useUnreadNotificationCount";
 import type { NotificationsPage } from "../types/notifications";
 
@@ -72,9 +72,9 @@ export function useMutateMarkAllRead() {
       },
 
       onRollback: (snapshot) => {
-        (snapshot as [string, NotificationCacheEntry | undefined][]).forEach(
+        (snapshot as [QueryKey, NotificationCacheEntry | undefined][]).forEach(
           ([queryKey, data]) => {
-            queryClient.setQueryData(queryKey as [string], data);
+            queryClient.setQueryData(queryKey, data);
           },
         );
 
