@@ -5,10 +5,7 @@ import { useApprovalList } from "../features/approval/hooks/useApprovalList";
 import type { ApprovalItem } from "../features/approval/types/approval.types";
 import { Skeleton } from "../components/ui/Skeleton";
 import { EmptyState } from "../components/ui/emptyState";
-import {
-  getStatusMeta,
-  STATUS_COLOR_CLASSES,
-} from "../lib/statusConfig";
+import { ApprovalStatusPill } from "../components/approval/ApprovalStatusWidget";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -16,7 +13,7 @@ import {
  * Page size shared by the API request and the skeleton placeholders so the
  * loading state does not visually jump when the real data arrives.
  */
-const PAGE_SIZE = 6;
+const PAGE_SIZE = 12;
 
 /** Maximum number of page buttons rendered in the pagination control. */
 const MAX_VISIBLE_PAGES = 5;
@@ -530,7 +527,7 @@ export default function ApprovalListPage() {
                         : "—"}
                     </span>
                     {item.status ? (
-                      <ApprovalStatusPill status={item.status} />
+                      <ApprovalStatusPill status={(item.status?.toString().toLowerCase()) as 'pending' | 'approved' | 'rejected'} />
                     ) : null}
                   </div>
                 </div>
@@ -549,17 +546,6 @@ export default function ApprovalListPage() {
             </div>
           )}
         </div>
-
-        {/* Pagination — hidden while loading/erroring and when only one page exists. */}
-        {!showSkeletons && !isError && (
-          <ApprovalPagination
-            page={requestedPage}
-            total={total}
-            pageSize={PAGE_SIZE}
-            onPageChange={handlePageChange}
-            className="mt-6"
-          />
-        )}
       </div>
     </div>
   );

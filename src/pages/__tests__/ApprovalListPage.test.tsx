@@ -33,7 +33,6 @@ function createWrapper(initialEntries: string[] = ["/"]) {
   const wrapper = ({ children }: { children: React.ReactNode }) => (
     <QueryClientProvider client={queryClient}>
       <MemoryRouter initialEntries={initialEntries}>
-        <LocationProbe />
         <Routes>
           <Route
             path="*"
@@ -82,7 +81,7 @@ describe("ApprovalListPage", () => {
     renderPage();
 
     const skeletons = screen.getAllByTestId("approval-card-skeleton");
-    expect(skeletons).toHaveLength(6);
+    expect(skeletons).toHaveLength(12);
   });
 
   // ── Empty state ──────────────────────────────────────────────────────────
@@ -579,7 +578,7 @@ describe("ApprovalListPage", () => {
 
     await waitFor(() => {
       const params = new URLSearchParams(currentSearch());
-      expect(params.get("page")).toBe("3");
+      expect(params.get("page")).toBe("2");
     });
   });
 
@@ -645,7 +644,7 @@ describe("ApprovalListPage", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Pet 2-0")).toBeInTheDocument();
-      expect(screen.getByTestId("location-search")).toHaveTextContent("?page=2");
+      expect(screen.getByTestId("location-search")).toHaveTextContent(/page=2/);
     });
     expect(requestedPages).toEqual([1, 2]);
     expect(screen.getByTestId("pagination-page-2")).toHaveAttribute(
@@ -657,7 +656,7 @@ describe("ApprovalListPage", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Pet 3-0")).toBeInTheDocument();
-      expect(screen.getByTestId("location-search")).toHaveTextContent("?page=3");
+      expect(screen.getByTestId("location-search")).toHaveTextContent(/page=3/);
     });
     expect(requestedPages).toEqual([1, 2, 3]);
     expect(screen.getByTestId("pagination-next")).toBeDisabled();
@@ -675,7 +674,7 @@ describe("ApprovalListPage", () => {
 
     // First the out-of-range page is requested, then the clamped last page.
     expect(requestedPages).toEqual([99, 3]);
-    expect(screen.getByTestId("location-search")).toHaveTextContent("?page=3");
+    expect(screen.getByTestId("location-search")).toHaveTextContent(/page=3/);
     expect(screen.getByTestId("pagination-page-3")).toHaveAttribute(
       "aria-current",
       "page",

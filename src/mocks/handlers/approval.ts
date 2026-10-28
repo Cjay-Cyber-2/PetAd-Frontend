@@ -10,6 +10,63 @@ import { http, HttpResponse, delay } from "msw";
  */
 const BASE_URL = "/api";
 
+// ─── Admin approval queue data ────────────────────────────────────────────
+// NOTE: Real backend contract for approval endpoints pending final confirmation per Epic A.
+const ADMIN_APPROVALS = [
+	{
+		id: "adoption-101",
+		shelter: "Happy Paws Shelter",
+		pet: "Buddy (Golden Retriever)",
+		adopter: "John Doe",
+		submitted: new Date(Date.now() - 86400000 * 4).toISOString(),
+		shelterApproved: true,
+		daysWaiting: 4,
+		isOverdue: true,
+		type: "ADOPTION",
+		status: "PENDING",
+		flaggedRisk: false,
+	},
+	{
+		id: "adoption-102",
+		shelter: "Rescue League",
+		pet: "Luna (Siamese Cat)",
+		adopter: "Jane Smith",
+		submitted: new Date(Date.now() - 86400000).toISOString(),
+		shelterApproved: true,
+		daysWaiting: 1,
+		isOverdue: false,
+		type: "ADOPTION",
+		status: "PENDING",
+		flaggedRisk: true,
+	},
+	{
+		id: "custody-103",
+		shelter: "Happy Paws Shelter",
+		pet: "Max (German Shepherd)",
+		adopter: "Robert Brown",
+		submitted: new Date(Date.now() - 86400000 * 5).toISOString(),
+		shelterApproved: false,
+		daysWaiting: 5,
+		isOverdue: true,
+		type: "CUSTODY",
+		status: "SHELTER_APPROVED",
+		flaggedRisk: false,
+	},
+	{
+		id: "custody-104",
+		shelter: "City Animal Center",
+		pet: "Bella (Beagle)",
+		adopter: "Emily White",
+		submitted: new Date(Date.now() - 3600000 * 12).toISOString(),
+		shelterApproved: false,
+		daysWaiting: 0,
+		isOverdue: false,
+		type: "CUSTODY",
+		status: "PENDING",
+		flaggedRisk: false,
+	},
+];
+
 // ─── Handlers ─────────────────────────────────────────────────────────────────
 // NOTE: Real backend contract for approval endpoints pending final confirmation per Epic A.
 
