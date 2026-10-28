@@ -59,6 +59,7 @@ export const queryKeys = {
 	pets: {
 		list: () => ["pets"] as const,
 		detail: (id: string) => ["pets", id] as const,
+		search: (query: string) => ["pets", "search", query] as const,
 	},
 	timeline: {
 		detail: (adoptionId: string) => ["timeline", adoptionId] as const,
