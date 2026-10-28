@@ -46,8 +46,9 @@ describe("mock notification stream", () => {
 
     const response = await fetch("/api/notifications?filter=unread&limit=50");
     const page = (await response.json()) as NotificationsPage;
-    const stored = page.data.find((item) => item.id === envelope.payload.id);
-    expect(stored).toMatchObject({ id: envelope.payload.id, isRead: false });
+    expect(page.data).toContainEqual(
+      expect.objectContaining({ id: envelope.payload.id, isRead: false }),
+    );
   });
 
   it("cycles through sample event types when no type is given", () => {
