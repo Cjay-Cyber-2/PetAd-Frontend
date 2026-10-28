@@ -1,12 +1,16 @@
-import { useState, useEffect } from "react";
-import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { petService } from "@/api/petService";
-import type { Pet } from "@/types/pet";
+import { useDebouncedValue } from "../../../hooks/useDebouncedValue";
+import { petService } from "../../../api/petService";
+import { STALE_TIME } from "../../../lib/staleTime";
+import type { Pet } from "../../../types/pet";
+
+/** Fewer characters than this never trigger a request. */
+const MIN_QUERY_LENGTH = 2;
 
 /**
  * PetSearchBar - A search bar for finding pets
- * 
+ *
  * Features:
  * - 300ms debounce on user input
  * - Minimum 2 characters required before issuing a search
@@ -28,58 +32,44 @@ export interface PetSearchBarProps {
  */
 export function PetSearchBar({ initialQuery = "", onPetsFetch, onSearchChange }: PetSearchBarProps) {
   const [query, setQuery] = useState(initialQuery);
-  const { debouncedValue, rawValue, onChange, clear } = useDebouncedValue(query);
+  const debouncedQuery = useDebouncedValue(query.trim(), 300);
+  const isSearchable = debouncedQuery.length >= MIN_QUERY_LENGTH;
+  const reportedQuery = useRef(debouncedQuery);
 
-  // Use react-query with a query key that includes the query and page
-  // This ensures that when the query changes, a new query is triggered
-  // and stale in-flight requests from previous queries are ignored
-  const { data, isLoading, isFetching, refetch } = useQuery<Pet[], Error>(
-    ["pets", "search", debouncedValue, 1],
-    async () => {
-      // Minimum 2 characters check
-      if (debouncedValue.length < 2) {
-        return [];
-      }
-      return petService.searchPets(debouncedValue);
-    },
-    {
-      enabled: debouncedValue.length >= 2,
-      staleTime: 5 * 60 * 1000, // 5 minutes
-    }
-  );
+  // The query key contains the debounced term, so a new search starts a new
+  // cache entry and results from a superseded term are never shown.
+  const { data, isFetching } = useQuery<Pet[]>({
+    queryKey: ["pets", "search", debouncedQuery],
+    queryFn: () => petService.searchPets(debouncedQuery),
+    enabled: isSearchable,
+    staleTime: STALE_TIME.PETS,
+  });
 
-  // Update query when debounced value changes (with 300ms delay)
+  // Notify the parent once per settled query, resetting it to page 1.
   useEffect(() => {
-    if (debouncedValue !== query) {
-      setQuery(debouncedValue);
-      onSearchChange?.(debouncedValue, 1); // Reset page to 1 on new query
-    }
-  }, [debouncedValue, query, onSearchChange]);
+    if (reportedQuery.current === debouncedQuery) return;
+    reportedQuery.current = debouncedQuery;
+    onSearchChange(debouncedQuery, 1);
+  }, [debouncedQuery, onSearchChange]);
 
-  // Handle input changes from the debounced hook
-  const handleInputChange = (value: string) => {
-    setQuery(value);
-    onChange(value);
-  };
+  useEffect(() => {
+    if (data) onPetsFetch(data);
+  }, [data, onPetsFetch]);
 
-  // Handle clear (Escape key)
+  // Handle clear (Escape key or clear button)
   const handleClear = () => {
-    clear();
     setQuery("");
-    onSearchChange?.("", 1); // Reset to page 1 on clear
+    reportedQuery.current = "";
+    onSearchChange("", 1); // Reset to page 1 on clear
   };
 
   return (
     <div className="relative w-full">
-      <div className="absolute inset-0 pointer-events-none">
-        {/* Search icon or placeholder styling */}
-      </div>
-
       <input
         type="text"
         placeholder="Search pets..."
-        value={rawValue}
-        onChange={(e) => handleInputChange(e.target.value)}
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
         onKeyDown={(e) => {
           if (e.key === "Escape") {
             e.preventDefault();
@@ -91,7 +81,7 @@ export function PetSearchBar({ initialQuery = "", onPetsFetch, onSearchChange }:
       />
 
       {/* Clear button appears when there's input */}
-      {rawValue.length > 0 && (
+      {query.length > 0 && (
         <button
           type="button"
           onClick={handleClear}
@@ -103,11 +93,9 @@ export function PetSearchBar({ initialQuery = "", onPetsFetch, onSearchChange }:
       )}
 
       {/* Results section */}
-      {debouncedValue.length >= 2 && isFetching && (
-        <p className="mt-2 text-sm text-gray-500">Searching...</p>
-      )}
+      {isSearchable && isFetching && <p className="mt-2 text-sm text-gray-500">Searching...</p>}
 
-      {debouncedValue.length >= 2 && data && data.length > 0 && (
+      {isSearchable && !isFetching && data && data.length > 0 && (
         <ul className="mt-2 space-y-1 max-h-40 overflow-y-auto">
           {data.map((pet) => (
             <li key={pet.id} className="flex items-center px-2 py-1 text-sm hover:bg-gray-100 rounded">
@@ -118,7 +106,7 @@ export function PetSearchBar({ initialQuery = "", onPetsFetch, onSearchChange }:
         </ul>
       )}
 
-      {debouncedValue.length >= 2 && !data && data?.length !== 0 && (
+      {isSearchable && !isFetching && data && data.length === 0 && (
         <p className="mt-2 text-sm text-gray-500">No pets found</p>
       )}
     </div>
