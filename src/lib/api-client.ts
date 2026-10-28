@@ -1,5 +1,6 @@
 import type { ApiClientConfig } from "../types/auth";
 import { ApiError, ValidationApiError } from "./api-errors";
+import { logger } from "./logger";
 class ApiClient {
 	private baseURL: string;
 	private defaultHeaders: Record<string, string>;
@@ -111,7 +112,12 @@ if (response.status === 422) {
 		options: RequestInit = {},
 	): Promise<T> {
 		const url = `${this.baseURL}${endpoint}`;
-		const headers = this.getHeaders();
+		const headers = this.getHeaders() as Record<string, string>;
+
+		// Multipart bodies need the browser to set Content-Type (with the boundary).
+		if (typeof FormData !== "undefined" && options.body instanceof FormData) {
+			delete headers["Content-Type"];
+		}
 
 		try {
 			const response = await fetch(url, {
@@ -156,7 +162,12 @@ if (response.status === 422) {
 		return this.request<T>(endpoint, {
 			...options,
 			method: "POST",
-			body: data ? JSON.stringify(data) : undefined,
+			body:
+				typeof FormData !== "undefined" && data instanceof FormData
+					? data
+					: data
+						? JSON.stringify(data)
+						: undefined,
 		});
 	}
 
@@ -189,7 +200,7 @@ if (response.status === 422) {
 	}
 
 	setTokenStorage(storage: "localStorage" | "sessionStorage" | "cookie") {
-		console.log(`Token storage set to ${storage}`);
+		logger.debug(`Token storage set to ${storage}`);
 	}
 }
 

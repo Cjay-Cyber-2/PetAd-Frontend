@@ -5,6 +5,10 @@ import { useApprovalList } from "../features/approval/hooks/useApprovalList";
 import type { ApprovalItem } from "../features/approval/types/approval.types";
 import { Skeleton } from "../components/ui/Skeleton";
 import { EmptyState } from "../components/ui/emptyState";
+import {
+  getStatusMeta,
+  STATUS_COLOR_CLASSES,
+} from "../lib/statusConfig";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -525,18 +529,9 @@ export default function ApprovalListPage() {
                         ? new Date(item.submittedAt).toLocaleDateString()
                         : "—"}
                     </span>
-                    <span
-                      className={[
-                        "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider",
-                        item.status === "APPROVED"
-                          ? "bg-green-50 text-green-700"
-                          : item.status === "REJECTED"
-                            ? "bg-red-50 text-red-700"
-                            : "bg-amber-50 text-amber-700",
-                      ].join(" ")}
-                    >
-                      {statusLabel(item.status)}
-                    </span>
+                    {item.status ? (
+                      <ApprovalStatusPill status={item.status} />
+                    ) : null}
                   </div>
                 </div>
               ))}
@@ -554,6 +549,17 @@ export default function ApprovalListPage() {
             </div>
           )}
         </div>
+
+        {/* Pagination — hidden while loading/erroring and when only one page exists. */}
+        {!showSkeletons && !isError && (
+          <ApprovalPagination
+            page={requestedPage}
+            total={total}
+            pageSize={PAGE_SIZE}
+            onPageChange={handlePageChange}
+            className="mt-6"
+          />
+        )}
       </div>
     </div>
   );

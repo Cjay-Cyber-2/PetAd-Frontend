@@ -35,7 +35,15 @@ function createWrapper(initialEntries: string[] = ["/"]) {
       <MemoryRouter initialEntries={initialEntries}>
         <LocationProbe />
         <Routes>
-          <Route path="*" element={children} />
+          <Route
+            path="*"
+            element={
+              <>
+                <LocationProbe />
+                {children}
+              </>
+            }
+          />
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>
@@ -573,5 +581,104 @@ describe("ApprovalListPage", () => {
       const params = new URLSearchParams(currentSearch());
       expect(params.get("page")).toBe("3");
     });
+  });
+
+  // ── Pagination ───────────────────────────────────────────────────────────
+
+  /** Serves three pages of 12/12/1 items out of 25 total. */
+  function usePaginatedHandler(onRequest?: (page: number, limit: number) => void) {
+    server.use(
+      http.get("http://localhost:3000/api/approvals", ({ request }) => {
+        const url = new URL(request.url);
+        const page = Number(url.searchParams.get("page") ?? "1");
+        const limit = Number(url.searchParams.get("limit") ?? "10");
+        onRequest?.(page, limit);
+
+        const count = page < 3 ? limit : 1;
+
+        return HttpResponse.json({
+          items: Array.from({ length: count }).map((_, index) => ({
+            id: `page-${page}-item-${index}`,
+            petName: `Pet ${page}-${index}`,
+            applicantName: `Applicant ${page}-${index}`,
+            status: "PENDING",
+            submittedAt: "2026-06-01T10:00:00Z",
+          })),
+          total: 25,
+          page,
+          limit,
+        });
+      }),
+    );
+  }
+
+  it("requests a fixed page size of 12 and renders prev/next plus page numbers", async () => {
+    const requestedLimits: number[] = [];
+    usePaginatedHandler((_page, limit) => requestedLimits.push(limit));
+
+    renderPage();
+
+    await waitFor(() => expect(screen.getByText("Pet 1-0")).toBeInTheDocument());
+    expect(requestedLimits[0]).toBe(12);
+
+    const pagination = screen.getByTestId("approval-pagination");
+    expect(within(pagination).getByTestId("pagination-page-1")).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    expect(within(pagination).getByTestId("pagination-page-2")).toBeInTheDocument();
+    expect(within(pagination).getByTestId("pagination-page-3")).toBeInTheDocument();
+    expect(within(pagination).getByTestId("pagination-prev")).toBeDisabled();
+    expect(within(pagination).getByTestId("pagination-next")).toBeEnabled();
+  });
+
+  it("navigates between pages and keeps the page in the URL", async () => {
+    const requestedPages: number[] = [];
+    usePaginatedHandler((page) => requestedPages.push(page));
+
+    renderPage();
+
+    await waitFor(() => expect(screen.getByText("Pet 1-0")).toBeInTheDocument());
+
+    const user = userEvent.setup();
+    await user.click(screen.getByTestId("pagination-next"));
+
+    await waitFor(() => {
+      expect(screen.getByText("Pet 2-0")).toBeInTheDocument();
+      expect(screen.getByTestId("location-search")).toHaveTextContent("?page=2");
+    });
+    expect(requestedPages).toEqual([1, 2]);
+    expect(screen.getByTestId("pagination-page-2")).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+
+    await user.click(screen.getByTestId("pagination-page-3"));
+
+    await waitFor(() => {
+      expect(screen.getByText("Pet 3-0")).toBeInTheDocument();
+      expect(screen.getByTestId("location-search")).toHaveTextContent("?page=3");
+    });
+    expect(requestedPages).toEqual([1, 2, 3]);
+    expect(screen.getByTestId("pagination-next")).toBeDisabled();
+  });
+
+  it("falls back to the last valid page when ?page is out of range", async () => {
+    const requestedPages: number[] = [];
+    usePaginatedHandler((page) => requestedPages.push(page));
+
+    renderPage(["/?page=99"]);
+
+    await waitFor(() => {
+      expect(screen.getByText("Pet 3-0")).toBeInTheDocument();
+    });
+
+    // First the out-of-range page is requested, then the clamped last page.
+    expect(requestedPages).toEqual([99, 3]);
+    expect(screen.getByTestId("location-search")).toHaveTextContent("?page=3");
+    expect(screen.getByTestId("pagination-page-3")).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
   });
 });
