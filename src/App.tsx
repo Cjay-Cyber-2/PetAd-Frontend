@@ -6,6 +6,7 @@ import { GuestRoute } from "./components/auth/GuestRoute";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { PublicRoute } from "./components/auth/PublicRoute";
 import { AuthGateProvider } from "./context/AuthGateContext";
+import { AdminRouteGuard } from "./features/admin/components/AdminRouteGuard";
 import ListingsPage from "./pages/ListingsPage";
 
 const FavouritePage = lazy(() => import("./pages/FavouritePage"));
@@ -45,6 +46,10 @@ const AdminDisputeListPage = lazy(() => import("./pages/AdminDisputeListPage"));
 const DisputeDetailPage = lazy(() => import("./pages/DisputeDetailPage"));
 const ShelterApprovalQueuePage = lazy(() => import("./pages/ShelterApprovalQueuePage"));
 const MyDisputesPage = lazy(() => import("./pages/MyDisputesPage"));
+const AdminLayout = lazy(() => import("./features/admin/components/AdminLayout"));
+const AdminOverviewPage = lazy(() => import("./pages/admin/AdminOverviewPage"));
+const AdminSectionPage = lazy(() => import("./pages/admin/AdminSectionPage"));
+const ForbiddenPage = lazy(() => import("./pages/ForbiddenPage"));
 const DocumentVerificationPage = lazy(() => import("./pages/admin/DocumentVerificationPage"));
 const UsersPage = lazy(() => import("./pages/admin/UsersPage"));
 const AuditLogPage = lazy(() => import("./pages/admin/AuditLogPage"));
@@ -152,7 +157,20 @@ function App() {
             />
             <Route path="/status-polling-demo" element={<StatusPollingDemo />} />
           </Route>
+          <Route path="/admin/*" element={<AdminRouteGuard />}>
+            <Route element={<AdminLayout />}>
+              <Route index element={<AdminOverviewPage />} />
+              <Route path="approvals" element={<AdminApprovalQueuePage />} />
+              <Route path="disputes" element={<AdminDisputeListPage />} />
+              <Route path="documents" element={<AdminSectionPage />} />
+              <Route path="users" element={<AdminSectionPage />} />
+              <Route path="audit" element={<AdminSectionPage />} />
+              <Route path="*" element={<AdminSectionPage />} />
+            </Route>
+          </Route>
         </Route>
+
+        <Route path="/403" element={<ForbiddenPage />} />
 
         {/* ── Catch-all ─────────────────────────────────────────────────── */}
         <Route path="*" element={<Navigate to="/home" replace />} />
