@@ -2,8 +2,12 @@ import { describe, expect, it } from "vitest";
 import { loadEnv } from "../env";
 
 describe("loadEnv", () => {
-	it("names VITE_API_URL when it is removed", () => {
-		expect(() => loadEnv({})).toThrow(/VITE_API_URL/);
+	it("accepts a missing VITE_API_URL, which the API client defaults", () => {
+		expect(loadEnv({}).VITE_API_URL).toBeUndefined();
+	});
+
+	it("accepts an app-relative VITE_API_URL", () => {
+		expect(loadEnv({ VITE_API_URL: "/api" }).VITE_API_URL).toBe("/api");
 	});
 
 	it("names each invalid variable", () => {

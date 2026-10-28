@@ -34,10 +34,22 @@ const optionalUrl = z
 	});
 
 const envSchema = z.object({
+	// Optional: the API client falls back to /api under MSW and localhost otherwise.
+	// When set it must be an absolute URL or an app-relative path.
 	VITE_API_URL: z
-		.string({ error: "is required" })
-		.min(1, "is required")
-		.url("must be a valid URL"),
+		.string()
+		.optional()
+		.superRefine((value, ctx) => {
+			if (value === undefined || value === "" || value.startsWith("/")) return;
+			try {
+				new URL(value);
+			} catch {
+				ctx.addIssue({
+					code: z.ZodIssueCode.custom,
+					message: "must be a valid URL or an app-relative path",
+				});
+			}
+		}),
 	VITE_MSW: booleanString,
 	VITE_ENABLE_ANALYTICS: booleanString,
 	VITE_APP_NAME: z.string().optional(),
