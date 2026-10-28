@@ -1,10 +1,17 @@
 import { http, HttpResponse, delay } from "msw";
 
-// Wildcard origin: these handlers must match both the Vitest/jsdom origin
-// (http://localhost:3000) and the Vite dev origin (http://localhost:4321),
-// because apiClient uses a relative "/api" base whenever VITE_MSW=true.
-const BASE_URL = "*/api";
+/**
+ * Origin-relative base path for the approval endpoints.
+ *
+ * The app talks to `/api` (relative) when MSW is enabled and to
+ * `http://localhost:3000/api` otherwise, so the handlers must be registered
+ * against the path only — an absolute origin would never match in the browser
+ * dev server. Same convention as the other mock handler modules.
+ */
+const BASE_URL = "/api";
 
+// ─── Admin approval queue data ────────────────────────────────────────────
+// NOTE: Real backend contract for approval endpoints pending final confirmation per Epic A.
 const ADMIN_APPROVALS = [
 	{
 		id: "adoption-101",
