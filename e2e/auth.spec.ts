@@ -10,7 +10,7 @@ test.describe("auth redirect round-trip", () => {
     await expect(page.getByRole("heading", { name: "Welcome Pet Lover!" })).toBeVisible();
 
     await page.getByLabel("Email Address").fill("ada@example.com");
-    await page.getByLabel("Password").fill("secret123");
+    await page.getByLabel("Password", { exact: true }).fill("secret123");
     await page.getByRole("button", { name: "Sign In" }).click();
 
     await expect(page.getByRole("heading", { name: "Your account" })).toBeVisible({
