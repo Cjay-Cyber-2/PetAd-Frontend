@@ -11,12 +11,13 @@ const cards = [
 
 export default function AdminOverviewPage() {
   const stats = useAdminStats();
+  const statsByKey = Object.fromEntries(stats.map((stat) => [stat.key, stat]));
   return (
     <div className="space-y-6">
       <header><p className="text-sm font-semibold text-emerald-800">Administration</p><h1 className="mt-1 text-3xl font-bold text-slate-900">Overview</h1><p className="mt-2 text-slate-600">A live summary of the queues that need attention.</p></header>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {cards.map((card, index) => {
-          const stat = stats[index];
+        {cards.map((card) => {
+          const stat = statsByKey[card.key];
           const { key: cardKey, ...cardProps } = card;
           return stat ? <StatCard key={cardKey} {...cardProps} value={stat.data?.count} isLoading={stat.isLoading} isError={stat.isError} onRetry={() => { void stat.refetch(); }} /> : null;
         })}
