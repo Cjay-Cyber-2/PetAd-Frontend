@@ -8,7 +8,7 @@ import { adoptionHandlers } from "./adoption";
 import { custodyHandlers } from "./custody";
 import { authHandlers } from "./auth";
 import { listingsHandlers } from "./listings";
-import { messagingHandlers } from "./messaging";
+import { messageHandlers } from "./messages";
 
 /**
  * All MSW request handlers, combined from every domain module.
@@ -25,5 +25,5 @@ export const handlers = [
 	...adoptionHandlers,
 	...custodyHandlers,
 	...listingsHandlers,
-	...messagingHandlers,
+	...messageHandlers,
 ];
