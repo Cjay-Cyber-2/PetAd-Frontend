@@ -64,10 +64,10 @@ export default function ListingCard({ listing, priority = false }: ListingCardPr
         <div className="md:col-span-2 flex items-center justify-start md:justify-end gap-3">
           {listing.status !== "Adoption In-progress" && (
             <div className="flex gap-2">
-              <button type="button" aria-label="Edit listing" className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-50 border border-gray-100 hover:bg-gray-100 transition-colors">
+              <button className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-50 border border-gray-100 hover:bg-gray-100 transition-colors">
                 <EditIcon />
               </button>
-              <button type="button" aria-label="Delete listing" className="flex items-center justify-center w-8 h-8 rounded-full bg-red-50 border border-red-100 hover:bg-red-100 transition-colors">
+              <button className="flex items-center justify-center w-8 h-8 rounded-full bg-red-50 border border-red-100 hover:bg-red-100 transition-colors">
                 <TrashIcon />
               </button>
             </div>
