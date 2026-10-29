@@ -2,6 +2,7 @@ import { useApiMutation } from "./useApiMutation";
 import { useQueryClient, type QueryKey } from "@tanstack/react-query";
 import { UNREAD_NOTIFICATION_COUNT_QUERY_KEY } from "../features/notifications/hooks/useUnreadNotificationCount";
 import type { NotificationsPage } from "../types/notifications";
+import { queryKeys } from "../lib/queryKeys";
 
 type NotificationCache = {
   pages: NotificationsPage[];
@@ -50,14 +51,14 @@ export function useMutateMarkAllRead() {
   const { mutate, isPending, isError, error } = useApiMutation<void, void>(
     () => markAllNotificationsRead(),
     {
-      invalidates: [["notifications"], [...UNREAD_NOTIFICATION_COUNT_QUERY_KEY]],
+      invalidates: [queryKeys.notifications.list(), [...UNREAD_NOTIFICATION_COUNT_QUERY_KEY]],
       onOptimisticUpdate: () => {
         const snapshot = queryClient.getQueriesData<NotificationCacheEntry>({
-          queryKey: ["notifications"],
+          queryKey: queryKeys.notifications.list(),
         });
 
         queryClient.setQueriesData<NotificationCacheEntry>(
-          { queryKey: ["notifications"] },
+          { queryKey: queryKeys.notifications.list() },
           (old) => markAllAsRead(old),
         );
 

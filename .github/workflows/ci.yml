@@ -34,6 +34,13 @@ jobs:
 
       - name: Build check
         run: npm run build
+        env:
+          VITE_MSW: "false"
+
+      - name: Reject MSW in the production bundle
+        run: node scripts/check-prod-bundle.mjs
+        env:
+          VITE_MSW: "false"
 
       - name: Run unit tests
         run: npm test

@@ -5,6 +5,7 @@ import { StellarTxLink } from "../ui/StellarTxLink";
 import { Skeleton } from "../ui/Skeleton";
 import { EmptyState } from "../ui/emptyState";
 import type { ApprovalDecision } from "../../types/adoption";
+import { queryKeys } from "../../lib/queryKeys";
 import { STALE_TIME } from "../../lib/staleTime";
 import {
   getStatusMeta,
@@ -17,7 +18,7 @@ interface ApprovalHistoryTabProps {
 
 export default function ApprovalHistoryTab({ adoptionId }: ApprovalHistoryTabProps) {
   const { data: approvals, isLoading, isError } = useApiQuery<ApprovalDecision[]>(
-    ["approvals", adoptionId],
+    queryKeys.approvals.detail(adoptionId),
     () => adoptionService.getApprovals(adoptionId),
     // Approval history is operator-driven; a one-minute cache matches the approvals domain.
     { staleTime: STALE_TIME.APPROVALS },

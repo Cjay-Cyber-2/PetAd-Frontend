@@ -9,6 +9,9 @@ import { NotificationSocketProvider } from './context/NotificationSocketContext'
 import { initAnalytics } from './lib/analytics'
 import './index.css'
 import App from './App.tsx'
+import { loadEnv } from './lib/env'
+
+loadEnv()
 
 const STALE_SW_RELOAD_KEY = 'petad:stale-sw-reload'
 

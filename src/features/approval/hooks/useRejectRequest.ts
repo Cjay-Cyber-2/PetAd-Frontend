@@ -8,7 +8,7 @@ import type { ApprovalResponse } from "../schemas/approvalSchemas";
  *
  * The rejection reason is validated locally (min 20 chars) by
  * `approvalService.rejectRequest` before any network call. On success,
- * invalidates the `["approvals"]` query key so the approval list refetches.
+ * invalidates the approvals root query key so the approval list refetches.
  * A 409 Conflict (request already decided) propagates as a mutation error.
  */
 export function useRejectRequest() {

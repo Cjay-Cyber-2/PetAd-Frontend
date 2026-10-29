@@ -6,7 +6,7 @@ import type { ApprovalResponse } from "../schemas/approvalSchemas";
 /**
  * Mutation hook to approve an approval request.
  *
- * On success, invalidates the `["approvals"]` query key so the approval list
+ * On success, invalidates the approvals root query key so the approval list
  * refetches and reflects the new decision. A 409 Conflict (request already
  * decided by another operator) propagates as a standard mutation error.
  */

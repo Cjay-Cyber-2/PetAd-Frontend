@@ -63,14 +63,14 @@ export interface UseApiMutationReturn<TData, TVariables> {
  * const { mutate, isPending } = useApiMutation(
  *   (data: CreatePetPayload) => petService.create(data),
  *   {
- *     invalidates: [['pets']],
+ *     invalidates: [queryKeys.pets.list()],
  *     onOptimisticUpdate: (variables) => {
- *       const prev = queryClient.getQueryData(['pets']);
- *       queryClient.setQueryData(['pets'], old => [...(old ?? []), variables]);
+ *       const prev = queryClient.getQueryData(queryKeys.pets.list());
+ *       queryClient.setQueryData(queryKeys.pets.list(), old => [...(old ?? []), variables]);
  *       return prev; // snapshot
  *     },
  *     onRollback: (snapshot) => {
- *       queryClient.setQueryData(['pets'], snapshot);
+ *       queryClient.setQueryData(queryKeys.pets.list(), snapshot);
  *     },
  *   }
  * );

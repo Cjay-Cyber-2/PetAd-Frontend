@@ -3,6 +3,7 @@ import { FormInput, PasswordInput, GoogleButton, OrDivider, SubmitButton } from 
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { authService } from "../../api/authService";
 import { ApiError } from "../../lib/api-errors";
+import { clearUnauthenticatedSession } from "../../lib/session";
 import { logger } from "../../lib/logger";
 import { CURRENT_USER_STORAGE_KEY } from "../../hooks/useCurrentUser";
 
@@ -19,8 +20,10 @@ interface SignInFormErrors {
 
 /** Read the returnTo target from the query-string, then sessionStorage fallback. */
 function getReturnTo(searchParams: URLSearchParams): string {
-    const fromQuery = searchParams.get("returnTo");
-    if (fromQuery) return decodeURIComponent(fromQuery);
+    const redirect = searchParams.get("redirect") ?? searchParams.get("returnTo");
+    if (redirect && redirect.startsWith("/") && !redirect.startsWith("//")) {
+        return redirect;
+    }
     return sessionStorage.getItem("petad_return_to") ?? "/home";
 }
 
@@ -76,6 +79,7 @@ export function SignInForm() {
                 password: formData.password,
             });
             localStorage.setItem("auth_token", response.token);
+            clearUnauthenticatedSession();
             // Persist the profile so forms (e.g. the adoption applicant step)
             // can prefill the signed-in user's details.
             localStorage.setItem(

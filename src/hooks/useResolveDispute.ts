@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { resolveDispute, updateDisputeStatus } from "../api/disputes";
 import type { DisputeDetailApiResponse } from "./useDisputeDetail";
+import { queryKeys } from "../lib/queryKeys";
 
 interface ResolveDisputeVariables {
   disputeId: string;
@@ -79,7 +80,7 @@ export const useResolveDispute = () => {
       void queryClient.invalidateQueries({
         queryKey: ["dispute-detail", variables.disputeId],
       });
-      void queryClient.invalidateQueries({ queryKey: ["disputes"] });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.disputes.list() });
     },
   });
 };

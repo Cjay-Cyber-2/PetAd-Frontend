@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useDebouncedValue } from "../../../hooks/useDebouncedValue";
 import { petService } from "../../../api/petService";
 import { STALE_TIME } from "../../../lib/staleTime";
+import { queryKeys } from "../../../lib/queryKeys";
 import type { Pet } from "../../../types/pet";
 
 /** Fewer characters than this never trigger a request. */
@@ -39,7 +40,7 @@ export function PetSearchBar({ initialQuery = "", onPetsFetch, onSearchChange }:
   // The query key contains the debounced term, so a new search starts a new
   // cache entry and results from a superseded term are never shown.
   const { data, isFetching } = useQuery<Pet[]>({
-    queryKey: ["pets", "search", debouncedQuery],
+    queryKey: queryKeys.pets.search(debouncedQuery),
     queryFn: () => petService.searchPets(debouncedQuery),
     enabled: isSearchable,
     staleTime: STALE_TIME.PETS,

@@ -5,6 +5,7 @@ import { server } from "../../mocks/server";
 import { http, HttpResponse } from "msw";
 import { useMutateMarkAllRead } from "../useMutateMarkAllRead";
 import type { Notification, NotificationsPage } from "../../types/notifications";
+import { queryKeys } from "../../lib/queryKeys";
 
 function createWrapper() {
   const queryClient = new QueryClient({
@@ -43,7 +44,7 @@ function seedPaginatedCache(
   queryClient: QueryClient,
   notifications: Notification[],
 ) {
-  queryClient.setQueryData(["notifications", "all"], {
+  queryClient.setQueryData(queryKeys.notifications.list("all"), {
     pages: [
       {
         data: notifications,
@@ -59,7 +60,7 @@ function seedDropdownCache(
   queryClient: QueryClient,
   notifications: Notification[],
 ) {
-  queryClient.setQueryData<NotificationsPage>(["notifications", "dropdown"], {
+  queryClient.setQueryData<NotificationsPage>(queryKeys.notifications.dropdown(), {
     data: notifications,
     nextCursor: null,
     total: notifications.length,
