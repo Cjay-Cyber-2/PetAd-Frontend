@@ -47,6 +47,7 @@ const AdminDisputeListPage = lazy(() => import("./pages/AdminDisputeListPage"));
 const DisputeDetailPage = lazy(() => import("./pages/DisputeDetailPage"));
 const ShelterApprovalQueuePage = lazy(() => import("./pages/ShelterApprovalQueuePage"));
 const MyDisputesPage = lazy(() => import("./pages/MyDisputesPage"));
+const DocumentsPage = lazy(() => import("./pages/DocumentsPage"));
 const AdminLayout = lazy(() => import("./features/admin/components/AdminLayout"));
 const AdminOverviewPage = lazy(() => import("./pages/admin/AdminOverviewPage"));
 const AdminSectionPage = lazy(() => import("./pages/admin/AdminSectionPage"));
@@ -104,6 +105,7 @@ function App() {
         <Route element={<ProtectedRoute />}>
           <Route element={<MainLayout />}>
             <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/documents" element={<DocumentsPage />} />
             <Route path="/favourites" element={<FavouritePage />} />
             <Route path="/interests" element={<InterestPage />} />
             <Route path="/notifications" element={<NotificationPage />} />
