@@ -41,7 +41,7 @@ export function FreighterWalletButton() {
         type="button"
         onClick={() => void connect()}
         disabled={isConnecting}
-        aria-label={isConnecting ? "Connecting..." : "Connect wallet with Freighter"}
+        aria-label="Connect Freighter wallet"
         className="flex items-center gap-2 rounded-full bg-[#001323] px-3 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-[#173047] disabled:cursor-wait disabled:opacity-60 dark:bg-blue-600 dark:hover:bg-blue-500"
         data-testid="freighter-connect-button"
       >

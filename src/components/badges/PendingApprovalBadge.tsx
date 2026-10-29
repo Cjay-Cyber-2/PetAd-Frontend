@@ -17,7 +17,7 @@ export function PendingApprovalBadge({ className = "" }: PendingApprovalBadgePro
     <span
       data-testid="pending-approval-badge"
       aria-label={`${count} pending approval${count === 1 ? "" : "s"}`}
-      className={`inline-flex min-w-[18px] h-[18px] items-center justify-center rounded-full bg-red-700 px-1 text-[10px] font-bold leading-none text-white ${className}`}
+      className={`inline-flex min-w-[18px] h-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white ${className}`}
     >
       {displayCount}
     </span>

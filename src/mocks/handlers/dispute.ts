@@ -1,10 +1,9 @@
 import { http, HttpResponse, delay } from "msw";
 import type { Dispute, DisputeListResponse } from "../../types/dispute";
-import { buildDispute } from "../../test/factories/dispute";
 
 // ─── Seed data ────────────────────────────────────────────────────────────────
 
-const MOCK_DISPUTE_SEEDS: Dispute[] = [
+const MOCK_DISPUTES: Dispute[] = [
 	{
 		id: "dispute-001",
 		adoptionId: "adoption-002",
@@ -215,8 +214,6 @@ const MOCK_DISPUTE_SEEDS: Dispute[] = [
 		updatedAt: "2026-04-04T15:30:00.000Z",
 	},
 ];
-
-const MOCK_DISPUTES: Dispute[] = MOCK_DISPUTE_SEEDS.map((dispute) => buildDispute(dispute));
 
 // ─── Detail-specific mock data with comments ──────────────────────────────────
 

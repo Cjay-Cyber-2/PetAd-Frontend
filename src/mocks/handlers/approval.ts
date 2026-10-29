@@ -1,5 +1,4 @@
 import { http, HttpResponse, delay } from "msw";
-import { buildApproval } from "../../test/factories/approval";
 
 /**
  * Origin-relative base path for the approval endpoints.
@@ -167,8 +166,16 @@ export const approvalHandlers = [
 		const search = url.searchParams.get("search");
 
 		const allItems = [
-			buildApproval(),
-			buildApproval({
+			{
+				id: "app-1",
+				adoptionId: "adopt-101",
+				petName: "Buddy",
+				applicantName: "John Doe",
+				status: "PENDING",
+				role: "veterinarian",
+				submittedAt: "2026-06-01T10:00:00Z",
+			},
+			{
 				id: "app-2",
 				adoptionId: "adopt-102",
 				petName: "Luna",
@@ -176,8 +183,8 @@ export const approvalHandlers = [
 				status: "APPROVED",
 				role: "shelter_admin",
 				submittedAt: "2026-06-02T11:00:00Z",
-			}),
-			buildApproval({
+			},
+			{
 				id: "app-3",
 				adoptionId: "adopt-103",
 				petName: "Max",
@@ -185,8 +192,8 @@ export const approvalHandlers = [
 				status: "REJECTED",
 				role: "welfare_officer",
 				submittedAt: "2026-06-03T12:00:00Z",
-			}),
-			buildApproval({
+			},
+			{
 				id: "app-4",
 				adoptionId: "adopt-104",
 				petName: "Bella",
@@ -194,8 +201,8 @@ export const approvalHandlers = [
 				status: "PENDING",
 				role: "admin",
 				submittedAt: "2026-06-04T13:00:00Z",
-			}),
-			buildApproval({
+			},
+			{
 				id: "app-5",
 				adoptionId: "adopt-105",
 				petName: "Charlie",
@@ -203,20 +210,20 @@ export const approvalHandlers = [
 				status: "APPROVED",
 				role: "veterinarian",
 				submittedAt: "2026-06-05T14:00:00Z",
-			}),
+			},
 		];
 
 		let filtered = allItems;
 
 		if (status) {
 			filtered = filtered.filter(
-				(item) => (item.status ?? "").toLowerCase() === status.toLowerCase()
+				(item) => item.status.toLowerCase() === status.toLowerCase()
 			);
 		}
 
 		if (role) {
 			filtered = filtered.filter(
-				(item) => (item.role ?? "").toLowerCase() === role.toLowerCase()
+				(item) => item.role.toLowerCase() === role.toLowerCase()
 			);
 		}
 
@@ -224,8 +231,8 @@ export const approvalHandlers = [
 			const s = search.toLowerCase();
 			filtered = filtered.filter(
 				(item) =>
-					(item.petName ?? "").toLowerCase().includes(s) ||
-					(item.applicantName ?? "").toLowerCase().includes(s)
+					item.petName.toLowerCase().includes(s) ||
+					item.applicantName.toLowerCase().includes(s)
 			);
 		}
 
