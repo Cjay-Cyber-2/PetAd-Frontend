@@ -6,9 +6,9 @@ import { expect, test } from "@playwright/test";
  * which runs `playwright test e2e/visual --update-snapshots`.
  */
 const SCREENS = [
-  { name: "home", path: "/home" },
-  { name: "listings", path: "/listings" },
-  { name: "login", path: "/login" },
+  { name: "home", path: "/home", ready: "Welcome Pet Lover" },
+  { name: "listings", path: "/listings", ready: "Listings" },
+  { name: "login", path: "/login", ready: "Welcome Pet Lover" },
 ] as const;
 
 const WIDTHS = [375, 1280] as const;
@@ -33,7 +33,11 @@ test.describe("visual regression", () => {
         await page.addStyleTag({
           content: "*, *::before, *::after { animation: none !important; transition: none !important; caret-color: transparent !important; }",
         });
-        await expect(page.locator("body")).toBeVisible();
+        // The routes are lazy-loaded: wait for the page itself, not the Suspense
+        // fallback, or the baseline records "Loading page...".
+        await expect(page.getByRole("heading", { name: screen.ready }).first()).toBeVisible({
+          timeout: 30_000,
+        });
 
         await expect(page).toHaveScreenshot(`${screen.name}-${width}.png`, {
           animations: "disabled",
