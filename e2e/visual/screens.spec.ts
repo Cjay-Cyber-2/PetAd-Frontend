@@ -14,13 +14,16 @@ const SCREENS = [
 const WIDTHS = [375, 1280] as const;
 
 test.describe("visual regression", () => {
-  test.use({ colorScheme: "light" });
+  // The header greets by time of day, so pin the clock and the time zone: a
+  // baseline recorded in the morning must still match in the evening.
+  test.use({ colorScheme: "light", timezoneId: "UTC" });
 
   for (const screen of SCREENS) {
     for (const width of WIDTHS) {
       test(`${screen.name} at ${width}px`, async ({ page }) => {
         await page.setViewportSize({ width, height: 900 });
         await page.emulateMedia({ reducedMotion: "reduce" });
+        await page.clock.setFixedTime(new Date("2026-01-15T09:00:00Z"));
         if (screen.name === "login") {
           await page.goto("/");
           await page.evaluate(() => {
