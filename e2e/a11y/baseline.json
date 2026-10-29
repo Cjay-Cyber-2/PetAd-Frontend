@@ -1,0 +1,12 @@
+{
+  "note": "Serious or critical axe violations that already existed in the notification dropdown when this gate was added. The gate fails on any violation not listed here; fix one, then delete its line.",
+  "violations": [
+    "color-contrast::.bg-\\[\\#E84D2A\\]",
+    "color-contrast::.disabled\\:opacity-50",
+    "color-contrast::.hover\\:bg-orange-50",
+    "label-content-name-mismatch::div[data-testid=\"dropdown-item-notif-001\"] > .bg-orange-50.hover\\:bg-orange-100.items-start",
+    "label-content-name-mismatch::div[data-testid=\"dropdown-item-notif-002\"] > .bg-orange-50.hover\\:bg-orange-100.items-start",
+    "label-content-name-mismatch::div[data-testid=\"dropdown-item-notif-003\"] > .bg-orange-50.hover\\:bg-orange-100.items-start",
+    "label-content-name-mismatch::div[data-testid=\"dropdown-item-notif-004\"] > .items-start.duration-150.last\\:border-b-0"
+  ]
+}
